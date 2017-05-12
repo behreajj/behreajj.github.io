@@ -1,0 +1,15 @@
+body {
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 1);
+    color: white;
+    font-family: sans-serif;
+    text-shadow: 1px 1px black;
+    font-size: 10pt;
+}
+
+canvas {
+    padding: 0;
+    margin: 0;
+}
