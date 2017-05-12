@@ -16,6 +16,12 @@ var r = 0,
   b = 0,
   a = 245;
 
+// Framecount is divided by a smoothening when
+// calculating the sine wave which changes r, g, b, a.
+var smooth1 = 1,
+  smooth2 = 1,
+  smooth3 = 1;
+
 // A scalar from 0 to 1, by which the r, g, b, a values
 // above will be multiplied to differentiate 'shadows'
 // highlights.
@@ -69,6 +75,9 @@ function setup() {
   label = createDiv('Shadow Distinction');
   label.position(10, 50);
 
+  smooth1 = random(30, 180);
+  smooth2 = random(30, 180);
+  smooth3 = random(30, 180);
 }
 
 function draw() {
@@ -78,9 +87,9 @@ function draw() {
   a = aSlider.value();
 
   // Change r, g, b, a value according to an arbitrary rule.
-  r = map(sin(frameCount / 30.0), -1, 1, 0, 255);
-  g = map(sin(frameCount / 60.0), -1, 1, 0, 255);
-  b = map(sin(frameCount / 90.0), -1, 1, 0, 255);
+  r = map(sin(frameCount / smooth1), -1, 1, 0, 255);
+  g = map(sin(frameCount / smooth2), -1, 1, 0, 255);
+  b = map(sin(frameCount / smooth3), -1, 1, 0, 255);
 
   // r = map(mouseX / width, 0, 1, 0, 255);
   // g = map(mouseY / height, 0, 1, 0, 255);
