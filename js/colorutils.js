@@ -104,6 +104,7 @@ ColorUtils.testIsLittleEndian = function(data, buf) {
 }
 
 ColorUtils.lerpColorArray = function(x, y, t) {
+  t = t < 0 ? 0 : t > 1 ? 1 : t;
   return [Math.lerp(x[0], y[0], t), Math.lerp(x[1], y[1], t), Math.lerp(x[2], y[2], t), Math.lerp(x[3], y[3], t)];
 }
 

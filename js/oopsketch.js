@@ -3,12 +3,10 @@
 var framecount = 0;
 var mousex = 0;
 var mousey = 0;
-var cnvswidth = 0;
-var cnvsheight = 0;
+
 var camcnvs = null;
 var cnvs = null;
-var ctx = null;
-var imgData = null;
+
 var buffer = null;
 var buf8 = null;
 var data = null;
@@ -22,8 +20,8 @@ const yellow = [255, 255, 0, 255];
 const blue = [0, 0, 255, 255];
 const green = [0, 255, 0, 255];
 
-const purple = [255, 0, 255, 255];
-const turquoise = [0, 255, 255, 255];
+const magenta = [255, 0, 255, 255];
+const cyan = [0, 255, 255, 255];
 
 const black = [0, 0, 0, 255];
 const white = [255, 255, 255, 255];
@@ -32,18 +30,10 @@ window.onload = initCam;
 window.onmousemove = onMouseMove;
 
 function setup() {
-  cnvs = document.createElement('canvas');
-  cnvswidth = cnvs.width = camcnvs.width;
-  cnvsheight = cnvs.height = camcnvs.height;
-  cnvs.style.width = '100%';
-  cnvs.style.height = '100%';
-  document.body.appendChild(cnvs);
 
-  ctx = cnvs.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-  // ctx.imageSmoothingQuality = 'low';
-  imgData = ctx.getImageData(0, 0, cnvs.width, cnvs.height);
-  buffer = new ArrayBuffer(imgData.data.length);
+  cnvs = new Cnvs(camcnvs.width, camcnvs.height);
+  document.body.appendChild(cnvs.cnvs);
+  buffer = new ArrayBuffer(cnvs.getDataLength());
   buf8 = new Uint8ClampedArray(buffer);
   data = new Uint32Array(buffer);
 
@@ -60,28 +50,36 @@ function initCam() {
 function draw(e) {
   framecount++;
   let fosc = Math.cos(framecount * .01) * .5 + .5;
-  let threshold = mousex * 255;
+  let threshold = (Math.sin(framecount * .005) * .5 + .5) * 255;
   let semithreshold = threshold * .5;
+  let clr = 0x00000000;
 
-  camcnvs.update();
+  camcnvs.updateImageData();
 
   // Assumes display canvas and webcam canvas are the same dimensions.
   // Upscaling is done via CSS.
-  for (let i = 0, y = 0, x; y < cnvsheight; ++y) {
-    let yprc = y / cnvsheight;
-    for (x = 0; x < cnvswidth; ++x, ++i) {
-      let xprc = x / cnvswidth;
-      let clr = 0;
+  let h = cnvs.height;
+  let w = cnvs.width;
+  for (let i = 0, y = 0, x; y < h; ++y) {
+    let yprc = y / h;
+    let rise = yprc - mousey;
+    rise *= rise;
+    for (x = 0; x < w; ++x, ++i) {
+      let xprc = x / w;
+      let run = xprc - mousex;
+      run *= run;
+
+      clr = 0x00000000;
       if (i % 3 == 0) {
-        let pxl = camcnvs.pixelAsArray32(i);
+        let pxl = camcnvs.getPixelAsArray32(i);
         let val = (pxl[0] + pxl[1] + pxl[2]) / 3;
 
         if (val < semithreshold) {
-          clr = lerpclr(red, yellow, xprc);
+          clr = lerpclr(red, yellow, (rise + run) / .5);
         } else if (val < threshold) {
           clr = lerpclr(blue, green, yprc);
         } else {
-          clr = lerpclr(purple, turquoise, mousey);
+          clr = lerpclr(magenta, cyan, xprc);
         }
       } else {
         clr = lerpclr(black, white, fosc);
@@ -91,8 +89,7 @@ function draw(e) {
     }
   }
 
-  imgData.data.set(buf8);
-  ctx.putImageData(imgData, 0, 0);
+  cnvs.updatePixels(buf8);
 
   window.requestAnimationFrame(draw);
 }
