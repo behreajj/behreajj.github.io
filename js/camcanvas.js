@@ -1,17 +1,21 @@
 'use strict';
 
-// Simplify cross-browser naming conventions.
-navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
-window.URL = window.URL || window.webkitURL;
+class CamCnvs extends TwoDCnvs {
 
-class CamCnvs extends Cnvs {
-
-  constructor(callback, mediaOptions = CamCnvs.defaultMediaOptions, vidId = CamCnvs.defaultVideoId, styleWidth = Cnvs.defaultStyleWidth, styleHeight = Cnvs.defaultStyleHeight, imageRendering = Cnvs.defaultImageRendering, imageSmoothing = Cnvs.defaultImageSmoothingEnabled, imageSmoothingQuality = Cnvs.defaultImageSmoothingQuality, cnvsId = CamCnvs.defaultCanvasId) {
+  constructor(callback,
+    mediaOptions = CamCnvs.defaultMediaOptions,
+    vidId = CamCnvs.defaultVideoId,
+    styleWidth = Cnvs.defaultStyleWidth,
+    styleHeight = Cnvs.defaultStyleHeight,
+    imageRendering = Cnvs.defaultImageRendering,
+    imageSmoothing = Cnvs.defaultImageSmoothingEnabled,
+    imageSmoothingQuality = Cnvs.defaultImageSmoothingQuality,
+    cnvsId = CamCnvs.defaultCanvasId) {
 
     // Call parent constructor.
     // Width and height will be determined by the video element.
     // Defaults to 2D rendering context with no alpha.
-    super(Cnvs.defaultWidth, Cnvs.defaultHeight, styleWidth, styleHeight, imageRendering, CamCnvs.defaultRenderingContext, CamCnvs.defaultContextAttributes, imageSmoothing, imageSmoothingQuality, cnvsId);
+    super(Cnvs.defaultWidth, Cnvs.defaultHeight, styleWidth, styleHeight, imageRendering, CamCnvs.defaultContextAttributes, imageSmoothing, imageSmoothingQuality, cnvsId);
 
     // If user-media is not supported, throw an error.
     if (!navigator.getUserMedia) {
@@ -38,8 +42,9 @@ class CamCnvs extends Cnvs {
         this._vid.addEventListener('loadedmetadata', function(e) {
 
           // Update the parent canvas's width and height.
-          this.width = this._vid.videoWidth;
-          this.height = this._vid.videoHeight;
+          // this.width = this._vid.videoWidth;
+          // this.height = this._vid.videoHeight;
+          this.resize(this._vid.videoWidth, this._vid.videoHeight);
 
           // Upon completion, call the callback function.
           // This allows setup functions to resume once

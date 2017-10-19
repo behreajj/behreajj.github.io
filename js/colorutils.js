@@ -1,16 +1,20 @@
-Math.lerp = Math.lerp || function(x, y, t) {
-  return (1 - t) * x + t * y;
-};
-
-Math.smootherStep = Math.smootherStep || function(x, y, t) {
-  return x + t * t * t * (t * (t * 6 - 15) + 10) * (y - x);
-};
-
 class ColorUtils {
 
 }
 
 ColorUtils.isLittleEndian = true;
+
+ColorUtils.array = function(clr, littleEndian = ColorUtils.isLittleEndian) {
+  return littleEndian ? ColorUtils.arrayLittleEndian(clr) : ColorUtils.arrayBigEndian(clr);
+}
+
+ColorUtils.arrayBigEndian = function(clr) {
+  return [((clr >> 24) & 0xff) / 255, ((clr >> 16) & 0xff) / 255, ((clr >> 8) & 0xff) / 255, (clr & 0xff) / 255];
+}
+
+ColorUtils.arrayLittleEndian = function(clr) {
+  return [(clr & 0xff) / 255, ((clr >> 8) & 0xff) / 255, ((clr >> 16) & 0xff) / 255, ((clr >> 24) & 0xff) / 255];
+}
 
 ColorUtils.array32BigEndian = function(clr) {
   return [(clr >> 24) & 0xff, (clr >> 16) & 0xff, (clr >> 8) & 0xff, clr & 0xff];
@@ -21,10 +25,7 @@ ColorUtils.array32LittleEndian = function(clr) {
 }
 
 ColorUtils.array32 = function(clr, littleEndian = ColorUtils.isLittleEndian) {
-  if (littleEndian) {
-    return ColorUtils.array32LittleEndian(clr);
-  }
-  return ColorUtils.array32BigEndian(clr);
+  return littleEndian ? ColorUtils.array32LittleEndian(clr) : ColorUtils.array32BigEndian(clr);
 }
 
 ColorUtils.color32BigEndian = function(r, g, b, a = 255) {
@@ -36,59 +37,56 @@ ColorUtils.color32LittleEndian = function(r, g, b, a = 255) {
 }
 
 ColorUtils.color32 = function(r, g, b, a = 255, littleEndian = ColorUtils.isLittleEndian) {
-  if (littleEndian) {
-    return ColorUtils.color32LittleEndian(r, g, b, a);
-  }
-  return ColorUtils.color32BigEndian(r, g, b, a);
+  return littleEndian ? ColorUtils.color32LittleEndian(r, g, b, a) : ColorUtils.color32BigEndian(r, g, b, a);
 }
 
-ColorUtils.hsbToRgb = function(hue, sat, bri) {
-  let r = 0;
-  let g = 0;
-  let b = 0;
-
-  // Optional: ensure range 0 .. 1.
-  hue = hue < 0 ? 0 : hue > 1 ? 1 : hue;
-  sat = sat < 0 ? 0 : sat > 1 ? 1 : sat;
-  bri = bri < 0 ? 0 : bri > 1 ? 1 : bri;
-
-  if (sat === 0) {
-    r = g = b = bri;
-  } else {
-    hue *= 6;
-    let sector = Math.floor(hue);
-    let tint1 = bri * (1 - sat);
-    let tint2 = bri * (1 - sat * (hue - sector));
-    let tint3 = bri * (1 - sat * (1 + sector - hue));
-
-    if (sector === 1) {
-      r = tint2;
-      g = bri;
-      b = tint1;
-    } else if (sector === 2) {
-      r = tint1;
-      g = bri;
-      b = tint3;
-    } else if (sector === 3) {
-      r = tint1;
-      g = tint2;
-      b = bri;
-    } else if (sector === 4) {
-      r = tint3;
-      g = tint1;
-      b = bri;
-    } else if (sector === 5) {
-      r = bri;
-      g = tint1;
-      b = tint2;
-    } else {
-      r = bri;
-      g = tint3;
-      b = tint1;
-    }
-  }
-  return [r, g, b];
-}
+// ColorUtils.hsbToRgb = function(hue, sat, bri) {
+//   let r = 0;
+//   let g = 0;
+//   let b = 0;
+//
+//   // Optional: ensure range 0 .. 1.
+//   hue = hue < 0 ? 0 : hue > 1 ? 1 : hue;
+//   sat = sat < 0 ? 0 : sat > 1 ? 1 : sat;
+//   bri = bri < 0 ? 0 : bri > 1 ? 1 : bri;
+//
+//   if (sat === 0) {
+//     r = g = b = bri;
+//   } else {
+//     hue *= 6;
+//     let sector = Math.floor(hue);
+//     let tint1 = bri * (1 - sat);
+//     let tint2 = bri * (1 - sat * (hue - sector));
+//     let tint3 = bri * (1 - sat * (1 + sector - hue));
+//
+//     if (sector === 1) {
+//       r = tint2;
+//       g = bri;
+//       b = tint1;
+//     } else if (sector === 2) {
+//       r = tint1;
+//       g = bri;
+//       b = tint3;
+//     } else if (sector === 3) {
+//       r = tint1;
+//       g = tint2;
+//       b = bri;
+//     } else if (sector === 4) {
+//       r = tint3;
+//       g = tint1;
+//       b = bri;
+//     } else if (sector === 5) {
+//       r = bri;
+//       g = tint1;
+//       b = tint2;
+//     } else {
+//       r = bri;
+//       g = tint3;
+//       b = tint1;
+//     }
+//   }
+//   return [r, g, b];
+// }
 
 // Cf. http://jsfiddle.net/andrewjbaker/Fnx2w/
 ColorUtils.testIsLittleEndian = function(data, buf) {
@@ -109,17 +107,7 @@ ColorUtils.lerpColorArray = function(x, y, t) {
 }
 
 ColorUtils.lerpColorComposite = function(x, y, t, littleEndian = ColorUtils.isLittleEndian) {
-  if (littleEndian) {
-    return ColorUtils.lerpColorCompositeLittleEndianFromArray(ColorUtils.array32LittleEndian(x), ColorUtils.array32LittleEndian(y), t);
-  }
-  return ColorUtils.lerpColorCompositeBigEndianFromArray(ColorUtils.array32BigEndian(x), ColorUtils.array32BigEndian(y), t);
-}
-
-ColorUtils.lerpColorCompositeFromArray = function(x, y, t, littleEndian = ColorUtils.isLittleEndian) {
-  if (littleEndian) {
-    return ColorUtils.lerpColorCompositeLittleEndianFromArray(x, y, t);
-  }
-  return ColorUtils.lerpColorCompositeBigEndianFromArray(x, y, t);
+  return littleEndian ? ColorUtils.lerpColorCompositeLittleEndianFromArray(ColorUtils.array32LittleEndian(x), ColorUtils.array32LittleEndian(y), t) : ColorUtils.lerpColorCompositeBigEndianFromArray(ColorUtils.array32BigEndian(x), ColorUtils.array32BigEndian(y), t);
 }
 
 ColorUtils.lerpColorCompositeBigEndian = function(x, y, t) {
@@ -138,4 +126,12 @@ ColorUtils.lerpColorCompositeLittleEndian = function(x, y, t) {
 ColorUtils.lerpColorCompositeLittleEndianFromArray = function(x, y, t) {
   let arr = ColorUtils.lerpColorArray(x, y, t);
   return ColorUtils.color32LittleEndian(arr[0], arr[1], arr[2], arr[3]);
+}
+
+ColorUtils.lerpColorCompositeFromArray = function(x, y, t, littleEndian = ColorUtils.isLittleEndian) {
+  return littleEndian ? ColorUtils.lerpColorCompositeLittleEndianFromArray(x, y, t) : ColorUtils.lerpColorCompositeBigEndianFromArray(x, y, t);
+}
+
+ColorUtils.randomRgbColorArray = function(rMin = 0, rMax = 255, gMin = 0, gMax = 255, bMin = 0, bMax = 255, aMin = 255, aMax = 255) {
+  return [Math.randomRange(rMin, rMax), Math.randomRange(gMin, gMax), Math.randomRange(bMin, bMax), Math.randomRange(aMin, aMax)];
 }
