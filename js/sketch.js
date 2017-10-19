@@ -23,16 +23,16 @@ const green = [0, 255, 0, 255];
 const magenta = [255, 0, 255, 255];
 const cyan = [0, 255, 255, 255];
 
-const black = [0, 0, 0, 255];
-const white = [255, 255, 255, 255];
+const black = ColorUtils.randomRgbColorArray();
+const white = ColorUtils.randomRgbColorArray();
 
 window.onload = initCam;
 window.onmousemove = onMouseMove;
 
-function setup() {
+function setup(e) {
 
-  cnvs = new Cnvs(camcnvs.width, camcnvs.height);
-  document.body.appendChild(cnvs.cnvs);
+  cnvs = new TwoDCnvs(camcnvs.width, camcnvs.height);
+  cnvs.append(document.body);
   buffer = new ArrayBuffer(cnvs.getDataLength());
   buf8 = new Uint8ClampedArray(buffer);
   data = new Uint32Array(buffer);
@@ -57,7 +57,6 @@ function draw(e) {
   camcnvs.updateImageData();
 
   // Assumes display canvas and webcam canvas are the same dimensions.
-  // Upscaling is done via CSS.
   let h = cnvs.height;
   let w = cnvs.width;
   for (let i = 0, y = 0, x; y < h; ++y) {
