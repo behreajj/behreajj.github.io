@@ -19,10 +19,17 @@ class TwoDCnvs extends Cnvs {
     this._buffer = new ArrayBuffer(this._data.length);
     this._buf8 = new Uint8ClampedArray(this._buffer);
     this._data = new Uint32Array(this._buffer);
+
+    // Test Endianness.
+    this._isLittleEndian = ColorUtils.testIsLittleEndian(this._data, this._buffer);
   }
 
   get height() {
     return this._height;
+  }
+
+  get isLittleEndian() {
+    return this._isLittleEndian;
   }
 
   get width() {
@@ -39,6 +46,10 @@ class TwoDCnvs extends Cnvs {
     this.updateImageData();
   }
 
+  getClass() {
+    return this.constructor.name;
+  }
+
   resize(w, h, styleW = this._style.width, styleH = this._style.height) {
     this._cnvs.width = this._width = w;
     this._cnvs.height = this._height = h;
@@ -51,6 +62,14 @@ class TwoDCnvs extends Cnvs {
     return this._imgData.data.length;
   }
 
+  getIndexOfVector(v) {
+    return Math.clamp(4 * (v.y * this._width + v.x), 0, this._imgData.data.length - 1);
+  }
+
+  getPixelAsComposite(index) {
+    return this._isLittleEndian ? this.getPixelAsCompositeLittleEndian(index) : this.getPixelAsCompositeBigEndian(index);
+  }
+
   getPixelAsCompositeBigEndian(index) {
     let px = this.pixelAsArray32(index);
     return ColorUtils.color32BigEndian(px[0], px[1], px[2], px[3]);
@@ -61,9 +80,31 @@ class TwoDCnvs extends Cnvs {
     return ColorUtils.color32LittleEndian(px[0], px[1], px[2], px[3]);
   }
 
-  getPixelAsArray32(index) {
-    let i = index * 4;
+  getPixelAsArray32(i) {
+    i *= 4;
     return [this._data[i], this._data[i + 1], this._data[i + 2], this._data[i + 3]];
+  }
+
+  resetTransform() {
+    this._ctx.resetTransform();
+  }
+
+  rotate(a) {
+    this._ctx.rotate(a);
+  }
+
+  scale(x, y) {
+    this._ctx.scale(x, y);
+  }
+
+  translate(v) {
+    this._ctx.translate(v.x, v.y);
+  }
+
+  transform(m00 = 1, m10 = 0,
+    m01 = 0, m11 = 1,
+    m02 = 0, m12 = 0) {
+    this._ctx.transform(m00, m10, m01, m11, m02, m12);
   }
 
   updateImageData() {

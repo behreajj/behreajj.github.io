@@ -81,44 +81,40 @@ class Cnvs {
     this._cnvs.width = this._width = v;
   }
 
+  append(elt) {
+    elt.appendChild(this._cnvs);
+  }
+
+  resetTransform() {
+    this._ctx.resetTransform();
+  }
+
   resize(w, h, styleW = this._style.width, styleH = this._style.height) {
     this._cnvs.width = this._width = w;
     this._cnvs.height = this._height = h;
     this._style.width = styleW;
     this._style.height = styleH;
   }
-
-  append(elt) {
-    elt.appendChild(this._cnvs);
-  }
 }
 
-// See https://developer.mozilla.org/en-US/docs/Web/CSS/image-rendering
 Cnvs.canvasImageRendering = {
   auto: 'auto',
   crispEdges: 'crisp-edges',
   pixelated: 'pixelated'
 }
-
-// See https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/imageSmoothingEnabled
 Cnvs.contextImageSmoothing = {
   enabled: true,
   disabled: false
 }
-
-// See https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/imageSmoothingQuality
 Cnvs.contextImageSmoothingQuality = {
   low: 'low',
   medium: 'medium',
   high: 'high'
 }
-
-// See https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/getContext
 Cnvs.renderingContext = {
   twod: '2d',
   webgl: 'webgl',
 }
-
 Cnvs.defaultCanvasId = 'canvas';
 Cnvs.defaultContextAttributes = {
   alpha: true

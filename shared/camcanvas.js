@@ -1,8 +1,8 @@
 'use strict';
 
-class CamCnvs extends TwoDCnvs {
+class CamCnvs extends VidCnvs {
 
-  constructor(callback,
+  constructor(callback = undefined,
     mediaOptions = CamCnvs.defaultMediaOptions,
     vidId = CamCnvs.defaultVideoId,
     styleWidth = Cnvs.defaultStyleWidth,
@@ -12,21 +12,13 @@ class CamCnvs extends TwoDCnvs {
     imageSmoothingQuality = Cnvs.defaultImageSmoothingQuality,
     cnvsId = CamCnvs.defaultCanvasId) {
 
-    // Call parent constructor.
-    // Width and height will be determined by the video element.
-    // Defaults to 2D rendering context with no alpha.
-    super(Cnvs.defaultWidth, Cnvs.defaultHeight, styleWidth, styleHeight, imageRendering, CamCnvs.defaultContextAttributes, imageSmoothing, imageSmoothingQuality, cnvsId);
+    super(null, undefined, vidId, styleWidth, styleHeight, imageRendering, imageSmoothing, imageSmoothingQuality, cnvsId);
+    this._vid.removeEventListener('loadedmetadata', 0);
 
     // If user-media is not supported, throw an error.
     if (!navigator.getUserMedia) {
       throw 'navigator.getUserMedia not available.';
     }
-
-    // Create DOM element.
-    this._vid = document.createElement('video');
-
-    // Set video properties.
-    this._vid.id = vidId;
 
     // Get User Media takes three arguments:
     // 1. Media options;
@@ -42,43 +34,25 @@ class CamCnvs extends TwoDCnvs {
         this._vid.addEventListener('loadedmetadata', function(e) {
 
           // Update the parent canvas's width and height.
-          // this.width = this._vid.videoWidth;
-          // this.height = this._vid.videoHeight;
           this.resize(this._vid.videoWidth, this._vid.videoHeight);
 
           // Upon completion, call the callback function.
           // This allows setup functions to resume once
           // the video element has loaded asynchronously.
-          callback();
-
-          // 'this', which refers to the object, must be
-          // bound to each callback so the callback can
-          // edit the object's instance properties.
+          if (callback) {
+            this.onLoad = callback;
+            this.onLoad();
+          }
         }.bind(this));
       }.bind(this),
       function(e) {
         console.error(e);
       });
   }
-
-  get vid() {
-    return this._vid;
-  }
-
-  updateImageData() {
-    if (this._vid.readyState === this._vid.HAVE_ENOUGH_DATA) {
-      this._ctx.drawImage(this._vid, 0, 0, this._width, this._height);
-      super.updateImageData();
-    }
-  }
 }
 
-CamCnvs.defaultRenderingContext = Cnvs.renderingContext.twod;
-CamCnvs.defaultContextAttributes = {
-  alpha: false
-};
+CamCnvs.defaultCanvasId = 'camcanvas';
 CamCnvs.defaultMediaOptions = {
   video: true
-}
-CamCnvs.defaultCanvasId = 'camcanvas';
+};
 CamCnvs.defaultVideoId = 'webcam';
