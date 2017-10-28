@@ -41,27 +41,27 @@ class DiscreteCubicBezierSpline extends CubicBezierSpline {
   //   }
   // }
 
-  drawTransform2d(ctx, i,
-    tanScale = Matrix.defaultDrawScale,
-    normScale = Matrix.defaultDrawScale,
-    tanLineWidth = Matrix.defaultLineWidth,
-    normLineWidth = Matrix.defaultLineWidth,
-    tanStrokeStyle = Matrix4x4.defaultXAxisColor,
-    normStrokeStyle = Matrix4x4.defaultYAxisColor) {
-    this._transforms[i].draw2d(ctx, tanScale, normScale, tanLineWidth, normLineWidth, tanStrokeStyle, normStrokeStyle);
-  }
-
-  drawTransforms2d(ctx,
-    tanScale = Matrix.defaultDrawScale,
-    normScale = Matrix.defaultDrawScale,
-    tanLineWidth = Matrix.defaultLineWidth,
-    normLineWidth = Matrix.defaultLineWidth,
-    tanStrokeStyle = Matrix4x4.defaultXAxisColor,
-    normStrokeStyle = Matrix4x4.defaultYAxisColor) {
-    for (let i = 0, sz = this._transforms.length; i < sz; ++i) {
-      this._transforms[i].draw2d(ctx, tanScale, normScale, tanLineWidth, normLineWidth, tanStrokeStyle, normStrokeStyle);
-    }
-  }
+  // drawTransform2d(ctx, i,
+  //   tanScale = Matrix.defaultDrawScale,
+  //   normScale = Matrix.defaultDrawScale,
+  //   tanLineWidth = Matrix.defaultLineWidth,
+  //   normLineWidth = Matrix.defaultLineWidth,
+  //   tanStrokeStyle = Matrix4x4.defaultXAxisColor,
+  //   normStrokeStyle = Matrix4x4.defaultYAxisColor) {
+  //   this._transforms[i].draw2d(ctx, tanScale, normScale, tanLineWidth, normLineWidth, tanStrokeStyle, normStrokeStyle);
+  // }
+  //
+  // drawTransforms2d(ctx,
+  //   tanScale = Matrix.defaultDrawScale,
+  //   normScale = Matrix.defaultDrawScale,
+  //   tanLineWidth = Matrix.defaultLineWidth,
+  //   normLineWidth = Matrix.defaultLineWidth,
+  //   tanStrokeStyle = Matrix4x4.defaultXAxisColor,
+  //   normStrokeStyle = Matrix4x4.defaultYAxisColor) {
+  //   for (let i = 0, sz = this._transforms.length; i < sz; ++i) {
+  //     this._transforms[i].draw2d(ctx, tanScale, normScale, tanLineWidth, normLineWidth, tanStrokeStyle, normStrokeStyle);
+  //   }
+  // }
 
   getClass() {
     return this.constructor.name;
@@ -93,14 +93,29 @@ class DiscreteCubicBezierSpline extends CubicBezierSpline {
 
   toString(pr = 2) {
     let result = '[';
-    for(let i = 0, sz = this._transforms.length; i < sz; ++i) {
+    for (let i = 0, sz = this._transforms.length; i < sz; ++i) {
       result += this._transforms.toString(pr);
-      if(i < sz - 1) {
+      if (i < sz - 1) {
         result += ', ';
       }
     }
     result += ']';
     return result;
+  }
+
+  rotateZ(a) {
+    super.rotateZ(a);
+    this.updateTransforms(this._transforms.length);
+  }
+
+  scale(s) {
+    super.scale(s);
+    this.updateTransforms(this._transforms.length);
+  }
+
+  translate(v) {
+    super.scale(v);
+    this.updateTransforms(this._transforms.length);
   }
 
   updateTransforms(lod = this._transforms.length) {

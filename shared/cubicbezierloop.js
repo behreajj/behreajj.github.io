@@ -10,7 +10,7 @@ class CubicBezierLoop extends CubicBezierSpline {
     super(pts);
     if (this._curves.length > 1) {
       this.matchAnchorPointsForward();
-      this.mirrorControlPointsForward();
+      this.alignControlPointsForward();
     } else {
       // TODO Deal with edge case where loop is
       // only 1 curve long.

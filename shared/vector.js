@@ -38,13 +38,31 @@ class Vector {
   }
 
   angleBetween(v) {
-    if (this.equals(Vector.zero) || v.equals(Vector.zero)) {
-      console.error('Could not find angle. Either first term {0} or second {1} is zero.'
-        .format(this.toString(), v.toString()));
-      return 0;
-    }
+    // Safety check.
+    // if ((v._x === 0 && v._y === 0 && v._z === 0) ||
+    //   (this._x === 0 && this._y === 0 && this._z === 0)
+    // ) {
+    //   console.error('Could not find angle. Either first term {0} or second {1} is zero.'
+    //     .format(this.toString(), v.toString()));
+    //   return 0;
+    // }
+
     return Math.acos(Math.clamp(this.dot(v) / this.dist(v), -1, 1));
   }
+
+  // Was used in creating rotation matrices.
+  // applyModel(local, modview, caminv) {
+  //   let mv = modview.copy();
+  //   mv.mult(local);
+  //   return applyLocalModel(mv, caminv);
+  // }
+
+  // applyLocalModel(mv, caminv) {
+  //   let c = Matrix.dot2DArray1DArray(mv._m, this.to4Array());
+  //   let d = Matrix.dot2DArray1DArray(caminv._m, c);
+  //   this.from4Array(d);
+  //   return this;
+  // }
 
   copy() {
     return new Vector(this._x, this._y, this._z);
@@ -93,14 +111,36 @@ class Vector {
     return this;
   }
 
-  equals(v) {
-    return v.x === this._x && v.y === this._y && v.z === this._z;
+  equals(v, tolerance = Number.EPSILON) {
+    if (this === v) {
+      return true;
+    }
+    if (this.constructor.name !== v.constructor.name) {
+      return false;
+    }
+    return this._x.approx(v._x, tolerance) &&
+      this._y.approx(v._y, tolerance) &&
+      this._z.approx(v._z, tolerance);
   }
 
-  fromArray(arr) {
-    this._x = arr[0] || 0;
-    this._y = arr[1] || 0;
-    this._z = arr[2] || 0;
+  from3Array(arr) {
+    this._x = arr[0];
+    this._y = arr[1];
+    this._z = arr[2];
+    return this;
+  }
+
+  from4Array(arr) {
+    let w = arr[3];
+    if (w != 0 && w != 1) {
+      this._x = arr[0] / w;
+      this._y = arr[1] / w;
+      this._z = arr[2] / w;
+    } else {
+      this._x = arr[0];
+      this._y = arr[1];
+      this._z = arr[2];
+    }
     return this;
   }
 
@@ -114,33 +154,6 @@ class Vector {
 
   magSq() {
     return this._x * this._x + this._y * this._y + this._z * this._z;
-  }
-
-  // TODO Requires testing.
-  applyModel(local, modview, caminv) {
-    let mv = modview.copy();
-    mv.applyMatrix(local);
-    return applyLocalModel(mv, caminv);
-  }
-
-  // TODO Requires testing.
-  // Find a less inelegant name.
-  // This function is split from the above so
-  // as to not have to perform multiple
-  // copy and applyMatrix functions.
-  applyLocalModel(mv, caminv) {
-    let c = mv.mult([this._x, this._y, this._z, 1]);
-    let d = caminv.mult(c);
-    let w = d[3];
-    if (w != 0 && w != 1) {
-      d[0] /= w;
-      d[1] /= w;
-      d[2] /= w;
-    }
-    this._x = d[0];
-    this._y = d[1];
-    this._z = d[2];
-    return this;
   }
 
   norm() {
@@ -161,14 +174,15 @@ class Vector {
     return this;
   }
 
+  // RETAIN.
   reset() {
-    this._x = 0;
-    this._y = 0;
-    this._z = 0;
+    this._x = 0.0;
+    this._y = 0.0;
+    this._z = 0.0;
     return this;
   }
 
-  rotate2D(a) {
+  rotateZ(a) {
     let xt = this._x;
     let cs = Math.cos(a);
     let sn = Math.sin(a);
@@ -183,7 +197,7 @@ class Vector {
     return this;
   }
 
-  set(x = 0, y = 0, z = 0) {
+  set(x, y, z = 0) {
     this._x = x;
     this._y = y;
     this._z = z;
@@ -200,16 +214,15 @@ class Vector {
     return this;
   }
 
-  toArray() {
+  to3Array() {
     return [this._x, this._y, this._z];
   }
 
+  to4Array() {
+    return [this._x, this._y, this._z, 1];
+  }
+
   toString(pr = 2) {
-    // return '[{0}, {1}, {2}]'.format(
-    //   this._x.toFixed(pr),
-    //   this._y.toFixed(pr),
-    //   this._z.toFixed(pr)
-    // );
     return '[' + this._x.toFixed(pr) + ', ' +
       this._y.toFixed(pr) + ', ' +
       this._z.toFixed(pr) + ']';
@@ -298,8 +311,16 @@ Vector.easeArray = function(arr, t, func = Math.lerp) {
   return Vector.ease(arr[i], arr[i + 1], sclt - i, func);
 }
 
-Vector.fromArray = function(arr, off = 0) {
-  return new Vector(arr[off], arr[off + 1], arr[off + 2]);
+Vector.from3Array = function(arr) {
+  return new Vector(arr[0], arr[1], arr[2]);
+}
+
+Vector.from4Array = function(arr) {
+  let w = arr[3];
+  if (w != 0 && w != 1) {
+    return new Vector(arr[0] / w, arr[1] / w, arr[2] / w);
+  }
+  return new Vector(arr[0], arr[1], arr[2]);
 }
 
 Vector.mag = function(v) {
@@ -332,12 +353,12 @@ Vector.rescale = function(v, s) {
   return v.copy().norm().scale(s);
 }
 
-Vector.rotate2D = function(v, a) {
-  let cs = Math.cos(a);
-  let sn = Math.sin(a);
+Vector.rotateX = function(v, a) {
+  let cos = Math.cos(a);
+  let sin = Math.sin(a);
   return new Vector(
-    v.x * cs - v.y * sn,
-    v.x * sn + v.y * cs,
+    v.x * cos - v.y * sin,
+    v.x * sin + v.y * cos,
     v.z);
 }
 
@@ -345,7 +366,7 @@ Vector.scale = function(v, s) {
   return v.copy().scale(s);
 }
 
-Vector.sort = function(arr, comparator = Vector.defaultComparator) {
+Vector.sort1DArray = function(arr, comparator = Vector.defaultComparator) {
   arr.sort(comparator);
   return arr;
 }

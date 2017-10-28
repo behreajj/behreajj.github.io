@@ -1,24 +1,67 @@
 body {
-    padding: 0;
-    margin: 0;
-    overflow: hidden;
-    background-color: rgba(20, 20, 20, 1);
-    color: white;
-    font-family: sans-serif;
-    font-size: 11px;
-    text-shadow: 1px 1px black;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  background-color: rgba(20, 20, 20, 1);
+  color: white;
+  font-family: sans-serif;
+  font-size: 11px;
+  text-shadow: 1px 1px black;
 }
 
 canvas {
-    padding: 0;
-    margin: 0;
-    position: fixed;
+  padding: 0;
+  margin: 0;
+  position: fixed;
 }
 
-#instructions {
+#controlPanel {
   position: fixed;
   top: 10px;
   left: 10px;
   padding: 10px;
+  color: rgba(255, 255, 127, 1);
   background-color: rgba(0, 0, 0, .75);
+  border-radius: 5px;
+  transition: opacity 1s ease-in-out;
+  user-select: none;
+  width: 24%;
+  overflow: hidden;
+  text-overflow: clip;
+  font-size: 11px;
+}
+
+
+/*.controlEntry {
+  display: grid;
+}*/
+
+
+.controlRow {
+  width: 100%;
+  height: 1.5em;
+  overflow: hidden;
+  text-overflow: clip;
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+
+.controlCol {
+  display: inline-block;
+  padding-left: 2px;
+  padding-right: 2px;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+#col0 {
+  width: 20%;
+  color: rgba(255, 127, 0, 1);
+  text-align: right;
+  font-weight: bold;
+}
+
+#col1 {
+  width: auto;
+  color: white;
 }

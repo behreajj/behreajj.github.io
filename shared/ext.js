@@ -1,7 +1,11 @@
 'use strict';
 
-navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
-window.URL = window.URL || window.webkitURL;
+navigator.getUserMedia = navigator.getUserMedia ||
+  navigator.webkitGetUserMedia ||
+  navigator.mozGetUserMedia ||
+  navigator.msGetUserMedia;
+window.URL = window.URL ||
+  window.webkitURL;
 
 Math.HALF_PI = Math.PI * .5;
 Math.QUARTER_PI = Math.PI * .25;
@@ -34,9 +38,9 @@ Math.dist = Math.dist || function(x0, x1, y0, y1, z0 = 0, z1 = 0) {
 }
 
 Math.distsq = Math.distsq = function(x0, x1, y0, y1, z0 = 0, z1 = 0) {
+  let depth = z1 - z0;
   let rise = y1 - y0;
   let run = x1 - x0;
-  let depth = z1 - z0;
   return rise * rise + run * run + depth * depth;
 }
 
@@ -106,7 +110,7 @@ Array.prototype.step = function(t) {
 // strings to integers, and so extremely small numbers expressed
 Array.prototype.stepToIndex = function(t) {
   let sz = this.length;
-  if(sz === 0) {
+  if (sz === 0) {
     return undefined;
   } else if (sz === 1 || t <= 0) {
     return 0;
@@ -115,6 +119,11 @@ Array.prototype.stepToIndex = function(t) {
   }
   return Math.floor(t * (sz - 1));
 }
+
+Number.prototype.approx = Number.prototype.approx ||
+  function(v, tolerance = Number.EPSILON) {
+    return Math.abs(this - v) < tolerance;
+  }
 
 // Reference:
 // https://stackoverflow.com/questions/610406/javascript-equivalent-to-printf-string-format
@@ -136,7 +145,7 @@ String.prototype.format = String.prototype.format ||
   };
 
 String.random = String.random || function(len) {
-  let result = "";
+  let result = '';
   for (let i = 0; i < len; ++i) {
     result += String.fromCharCode(parseInt(Math.randomRange(97, 123)));
   }

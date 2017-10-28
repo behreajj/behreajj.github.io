@@ -95,6 +95,14 @@ class Cnvs {
     this._style.width = styleW;
     this._style.height = styleH;
   }
+
+  screenCap(filename) {
+    let img = this._cnvs.toDataURL('image/png');
+    let elt = document.createElement('a');
+    elt.setAttribute('href', img);
+    elt.setAttribute('download', filename + '.png');
+    elt.click();
+  }
 }
 
 Cnvs.canvasImageRendering = {

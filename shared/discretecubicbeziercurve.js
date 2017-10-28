@@ -19,27 +19,27 @@ class DiscreteCubicBezierCurve extends CubicBezierCurve {
     this.updateTransforms();
   }
 
-  drawTransform2d(ctx, i,
-    tanScale = Matrix.defaultDrawScale,
-    binormScale = Matrix.defaultDrawScale,
-    tanLineWidth = Matrix.defaultLineWidth,
-    binormLineWidth = Matrix.defaultLineWidth,
-    tanStrokeStyle = Matrix4x4.defaultXAxisColor,
-    binormStrokeStyle = Matrix4x4.defaultYAxisColor) {
-    this._transforms[i].draw2d(ctx, tanScale, binormScale, tanLineWidth, binormLineWidth, tanStrokeStyle, binormStrokeStyle);
-  }
-
-  drawTransforms2d(ctx,
-    tanScale = Matrix.defaultDrawScale,
-    binormScale = Matrix.defaultDrawScale,
-    tanLineWidth = Matrix.defaultLineWidth,
-    binormLineWidth = Matrix.defaultLineWidth,
-    tanStrokeStyle = Matrix4x4.defaultXAxisColor,
-    binormStrokeStyle = Matrix4x4.defaultYAxisColor) {
-    for (let i = 0, sz = this._transforms.length; i < sz; ++i) {
-      this._transforms[i].draw2d(ctx, tanScale, binormScale, tanLineWidth, binormLineWidth, tanStrokeStyle, binormStrokeStyle);
-    }
-  }
+  // drawTransform2d(ctx, i,
+  //   tanScale = Matrix.defaultDrawScale,
+  //   binormScale = Matrix.defaultDrawScale,
+  //   tanLineWidth = Matrix.defaultLineWidth,
+  //   binormLineWidth = Matrix.defaultLineWidth,
+  //   tanStrokeStyle = Matrix4x4.defaultXAxisColor,
+  //   binormStrokeStyle = Matrix4x4.defaultYAxisColor) {
+  //   this._transforms[i].draw2d(ctx, tanScale, binormScale, tanLineWidth, binormLineWidth, tanStrokeStyle, binormStrokeStyle);
+  // }
+  //
+  // drawTransforms2d(ctx,
+  //   tanScale = Matrix.defaultDrawScale,
+  //   binormScale = Matrix.defaultDrawScale,
+  //   tanLineWidth = Matrix.defaultLineWidth,
+  //   binormLineWidth = Matrix.defaultLineWidth,
+  //   tanStrokeStyle = Matrix4x4.defaultXAxisColor,
+  //   binormStrokeStyle = Matrix4x4.defaultYAxisColor) {
+  //   for (let i = 0, sz = this._transforms.length; i < sz; ++i) {
+  //     this._transforms[i].draw2d(ctx, tanScale, binormScale, tanLineWidth, binormLineWidth, tanStrokeStyle, binormStrokeStyle);
+  //   }
+  // }
 
   getClass() {
     return this.constructor.name;

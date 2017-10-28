@@ -25,27 +25,27 @@ class DiscreteCubicBezierLoop extends CubicBezierLoop {
     this.updateTransforms();
   }
 
-  drawTransform2d(ctx, i,
-    tanScale = Matrix.defaultDrawScale,
-    normScale = Matrix.defaultDrawScale,
-    tanLineWidth = Matrix.defaultLineWidth,
-    normLineWidth = Matrix.defaultLineWidth,
-    tanStrokeStyle = Matrix4x4.defaultXAxisColor,
-    normStrokeStyle = Matrix4x4.defaultYAxisColor) {
-    this._transforms[i].draw2d(ctx, tanScale, normScale, tanLineWidth, normLineWidth, tanStrokeStyle, normStrokeStyle);
-  }
-
-  drawTransforms2d(ctx,
-    tanScale = Matrix.defaultDrawScale,
-    normScale = Matrix.defaultDrawScale,
-    tanLineWidth = Matrix.defaultLineWidth,
-    normLineWidth = Matrix.defaultLineWidth,
-    tanStrokeStyle = Matrix4x4.defaultXAxisColor,
-    normStrokeStyle = Matrix4x4.defaultYAxisColor) {
-    for (let i = 0, sz = this._transforms.length; i < sz; ++i) {
-      this._transforms[i].draw2d(ctx, tanScale, normScale, tanLineWidth, normLineWidth, tanStrokeStyle, normStrokeStyle);
-    }
-  }
+  // drawTransform2d(ctx, i,
+  //   tanScale = Matrix.defaultDrawScale,
+  //   normScale = Matrix.defaultDrawScale,
+  //   tanLineWidth = Matrix.defaultLineWidth,
+  //   normLineWidth = Matrix.defaultLineWidth,
+  //   tanStrokeStyle = Matrix4x4.defaultXAxisColor,
+  //   normStrokeStyle = Matrix4x4.defaultYAxisColor) {
+  //   this._transforms[i].draw2d(ctx, tanScale, normScale, tanLineWidth, normLineWidth, tanStrokeStyle, normStrokeStyle);
+  // }
+  //
+  // drawTransforms2d(ctx,
+  //   tanScale = Matrix.defaultDrawScale,
+  //   normScale = Matrix.defaultDrawScale,
+  //   tanLineWidth = Matrix.defaultLineWidth,
+  //   normLineWidth = Matrix.defaultLineWidth,
+  //   tanStrokeStyle = Matrix4x4.defaultXAxisColor,
+  //   normStrokeStyle = Matrix4x4.defaultYAxisColor) {
+  //   for (let i = 0, sz = this._transforms.length; i < sz; ++i) {
+  //     this._transforms[i].draw2d(ctx, tanScale, normScale, tanLineWidth, normLineWidth, tanStrokeStyle, normStrokeStyle);
+  //   }
+  // }
 
   getClass() {
     return this.constructor.name;

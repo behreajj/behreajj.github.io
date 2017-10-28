@@ -89,23 +89,30 @@ class TwoDCnvs extends Cnvs {
     this._ctx.resetTransform();
   }
 
-  rotate(a) {
-    this._ctx.rotate(a);
+  // TODO Look up CSS format for single line font.
+  setFont(weight, size, fontf, align = 'center', baseline = 'middle') {
+    this._ctx.font = weight + size + fontf;
+    this._ctx.textAlign = align;
+    this._ctx.textBaseline = baseline;
   }
 
-  scale(x, y) {
-    this._ctx.scale(x, y);
-  }
-
-  translate(v) {
-    this._ctx.translate(v.x, v.y);
-  }
-
-  transform(m00 = 1, m10 = 0,
-    m01 = 0, m11 = 1,
-    m02 = 0, m12 = 0) {
-    this._ctx.transform(m00, m10, m01, m11, m02, m12);
-  }
+  // rotate(a) {
+  //   this._ctx.rotate(a);
+  // }
+  //
+  // scale(x, y) {
+  //   this._ctx.scale(x, y);
+  // }
+  //
+  // translate(v) {
+  //   this._ctx.translate(v.x, v.y);
+  // }
+  //
+  // transform(m00 = 1, m10 = 0,
+  //   m01 = 0, m11 = 1,
+  //   m02 = 0, m12 = 0) {
+  //   this._ctx.transform(m00, m10, m01, m11, m02, m12);
+  // }
 
   updateImageData() {
     this._imgData = this._ctx.getImageData(0, 0, this._width, this._height);

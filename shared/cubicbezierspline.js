@@ -128,18 +128,19 @@ class CubicBezierSpline extends CubicBezier {
     }
   }
 
-  applyModel(local, modview, caminv) {
-    let mv = modview.copy();
-    mv.applyMatrix(local);
-    return this.applyLocalModel(mv, caminv);
-  }
-
-  applyLocalModel(mv, caminv) {
-    for (let i = 0, sz = this._curves.length; i < sz; ++i) {
-      this._curves[i].applyLocalModel(mv, caminv);
-    }
-    return this;
-  }
+  // Was used in creating rotation matrices.
+  // applyModel(local, modview, caminv) {
+  //   let mv = modview.copy();
+  //   mv.mult(local);
+  //   return this.applyLocalModel(mv, caminv);
+  // }
+  //
+  // applyLocalModel(mv, caminv) {
+  //   for (let i = 0, sz = this._curves.length; i < sz; ++i) {
+  //     this._curves[i].applyLocalModel(mv, caminv);
+  //   }
+  //   return this;
+  // }
 
   calcPoint(st) {
     if (this._curves.length === 1 || st <= 0.0) {
@@ -275,7 +276,7 @@ class CubicBezierSpline extends CubicBezier {
     fontFace = CubicBezierSpline.defaultFontFace) {
 
     if (isEmphasized) {
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 4;
       ctx.strokeStyle = highlightColor;
     } else {
       ctx.lineWidth = 1;
@@ -291,9 +292,9 @@ class CubicBezierSpline extends CubicBezier {
     ctx.stroke();
 
     // Draw font.
-    ctx.font = fontSize + 'px ' + fontFace;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    // ctx.font = fontSize + 'px ' + fontFace;
+    // ctx.textAlign = 'center';
+    // ctx.textBaseline = 'middle';
     ctx.fillStyle = highlightColor;
     ctx.fillText(label, vec.x, vec.y);
   }
@@ -411,6 +412,18 @@ class CubicBezierSpline extends CubicBezier {
     console.table(this.to2DArray());
   }
 
+  rotateZ(a) {
+    for (let i = 0, sz = this._curves.length; i < sz; ++i) {
+      this._curves[i].rotateZ(a);
+    }
+  }
+
+  scale(s) {
+    for (let i = 0, sz = this._curves.length; i < sz; ++i) {
+      this._curves[i].scale(s);
+    }
+  }
+
   setCurve(i, c) {
     this._curves[i] = c.copy();
   }
@@ -462,12 +475,10 @@ class CubicBezierSpline extends CubicBezier {
     return result;
   }
 
-  transform2d(ctx, st) {
-    let m = this.calcTransform(st)._m;
-    ctx.transform(
-      m[0][2], m[1][2],
-      m[0][0], m[1][0],
-      m[0][3], m[1][3]);
+  translate(v) {
+    for (let i = 0, sz = this._curves.length; i < sz; ++i) {
+      this._curves[i].translate(v);
+    }
   }
 }
 

@@ -68,6 +68,21 @@ class CubicBezierCurve extends CubicBezier {
     }
   }
 
+  // Was used in matrix rotation.
+  // applyModel(local, modview, caminv) {
+  //   let mv = modview.copy();
+  //   mv.mult(local);
+  //   return this.applyLocalModel(mv, caminv);
+  // }
+  //
+  // applyLocalModel(mv, caminv) {
+  //   this._ap0.applyLocalModel(mv, caminv);
+  //   this._cp0.applyLocalModel(mv, caminv);
+  //   this._cp1.applyLocalModel(mv, caminv);
+  //   this._ap1.applyLocalModel(mv, caminv);
+  //   return this;
+  // }
+
   calcPoint(st) {
     return CubicBezier.calcPoint(this._ap0, this._cp0, this._cp1, this._ap1, st);
   }
@@ -112,22 +127,31 @@ class CubicBezierCurve extends CubicBezier {
     ctx.stroke();
   }
 
-  drawConstruction2d(ctx,
-    strokeStyle = CubicBezier.defaultConstructionStyle,
-    lineWidth = CubicBezier.defaultConstructionWidth) {
-    ctx.strokeStyle = strokeStyle;
-    ctx.lineWidth = lineWidth;
+  // drawConstruction2d(ctx,
+  //   strokeStyle = CubicBezier.defaultConstructionStyle,
+  //   lineWidth = CubicBezier.defaultConstructionWidth) {
+  //   ctx.strokeStyle = strokeStyle;
+  //   ctx.lineWidth = lineWidth;
+  //
+  //   ctx.beginPath();
+  //   ctx.moveTo(this._ap0.x, this._ap0.y);
+  //   ctx.lineTo(this._ap1.x, this._ap1.y);
+  //   ctx.lineTo(this._cp1.x, this._cp1.y);
+  //   ctx.lineTo(this._cp0.x, this._cp0.y);
+  //   ctx.closePath();
+  //   ctx.stroke();
+  // }
 
-    ctx.beginPath();
-    ctx.moveTo(this._ap0.x, this._ap0.y);
-    ctx.lineTo(this._ap1.x, this._ap1.y);
-    ctx.lineTo(this._cp1.x, this._cp1.y);
-    ctx.lineTo(this._cp0.x, this._cp0.y);
-    ctx.closePath();
-    ctx.stroke();
-  }
-
+  // TODO Needs testing.
   equals(v) {
+    if (this === v) {
+      return true;
+    }
+
+    if (this.constructor.name !== m.constructor.name) {
+      return false;
+    }
+
     return this._ap0.equals(v.ap0) &&
       this._cp0.equals(v.cp0) &&
       this._cp1.equals(v.cp1) &&
@@ -146,25 +170,25 @@ class CubicBezierCurve extends CubicBezier {
     return this;
   }
 
+  rotateZ(a) {
+    this._ap0.rotateZ(a);
+    this._cp0.rotateZ(a);
+    this._cp1.rotateZ(a);
+    this._ap1.rotateZ(a);
+  }
+
+  scale(s) {
+    this._ap0.scale(s);
+    this._cp0.scale(s);
+    this._cp1.scale(s);
+    this._ap1.scale(s);
+  }
+
   set(ap0, cp0, cp1, ap1) {
     this._ap0.set(ap0.x, ap0.y, ap0.z);
     this._cp0.set(cp0.x, cp0.y, cp0.z);
     this._cp1.set(cp1.x, cp1.y, cp1.z);
     this._ap1.set(ap1.x, ap1.y, ap1.z);
-    return this;
-  }
-
-  applyModel(local, modview, caminv) {
-    let mv = modview.copy();
-    mv.applyMatrix(local);
-    return this.applyLocalModel(mv, caminv);
-  }
-
-  applyLocalModel(mv, caminv) {
-    this._ap0.applyLocalModel(mv, caminv);
-    this._cp0.applyLocalModel(mv, caminv);
-    this._cp1.applyLocalModel(mv, caminv);
-    this._ap1.applyLocalModel(mv, caminv);
     return this;
   }
 
@@ -195,12 +219,11 @@ class CubicBezierCurve extends CubicBezier {
     );
   }
 
-  transform2d(ctx, st) {
-    let m = this.calcTransform(st)._m;
-    ctx.transform(
-      m[0][2], m[1][2],
-      m[0][0], m[1][0],
-      m[0][3], m[1][3]);
+  translate(v) {
+    this._ap0.add(v);
+    this._cp0.add(v);
+    this._cp1.add(v);
+    this._ap1.add(v);
   }
 }
 
