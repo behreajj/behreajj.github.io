@@ -24,6 +24,30 @@ class Matrix4x4 extends Matrix {
     return n;
   }
 
+  // determinant() {
+  //   let result = this._m[0][0] *
+  //     ((this._m[1][1] * this._m[2][2] * this._m[3][3] + this._m[1][2] * this._m[2][3] * this._m[3][1] + this._m[1][3] * this._m[2][1] * this._m[3][2]) -
+  //       this._m[1][3] * this._m[2][2] * this._m[3][1] -
+  //       this._m[1][1] * this._m[2][3] * this._m[3][2] -
+  //       this._m[1][2] * this._m[2][1] * this._m[3][3]);
+  //   result -= this._m[0][1] *
+  //     ((this._m[1][0] * this._m[2][2] * this._m[3][3] + this._m[1][2] * this._m[2][3] * this._m[3][0] + this._m[1][3] * this._m[2][0] * this._m[3][2]) -
+  //       this._m[1][3] * this._m[2][2] * this._m[3][0] -
+  //       this._m[1][0] * this._m[2][3] * this._m[3][2] -
+  //       this._m[1][2] * this._m[2][0] * this._m[3][3]);
+  //   result += this._m[0][2] *
+  //     ((this._m[1][0] * this._m[2][1] * this._m[3][3] + this._m[1][1] * this._m[2][3] * this._m[3][0] + this._m[1][3] * this._m[2][0] * this._m[3][1]) -
+  //       this._m[1][3] * this._m[2][1] * this._m[3][0] -
+  //       this._m[1][0] * this._m[2][3] * this._m[3][1] -
+  //       this._m[1][1] * this._m[2][0] * this._m[3][3]);
+  //   result -= this._m[0][3] *
+  //     ((this._m[1][0] * this._m[2][1] * this._m[3][2] + this._m[1][1] * this._m[2][2] * this._m[3][0] + this._m[1][2] * this._m[2][0] * this._m[3][1]) -
+  //       this._m[1][2] * this._m[2][1] * this._m[3][0] -
+  //       this._m[1][0] * this._m[2][2] * this._m[3][1] -
+  //       this._m[1][1] * this._m[2][0] * this._m[3][2]);
+  //   return f;
+  // }
+
   getColAsVector(j) {
     let arr = this.getColAsArray(j);
     let v = new Vector(arr[0], arr[1], arr[2]);
@@ -51,81 +75,6 @@ class Matrix4x4 extends Matrix {
 
     return v;
   }
-
-  // TODO Needs testing.
-  // rotate(angle, v) {
-
-  // Safety check 1.
-  // if (v._x === 0 && v._y === 0 && v._z === 0) {
-  //   console.error('Cannot rotate by zero vector.');
-  //   return;
-  // }
-
-  // Safety check 2.
-  // if(Math.abs(v.magSq() - 1) > Number.EPSILON) {
-  //   v.norm();
-  // }
-
-  // let c = Math.cos(angle);
-  // let s = Math.sin(angle);
-  // let t = 1.0 - c;
-  //
-  // let xsq = v.x * v.x;
-  // let ysq = v.y * v.y;
-  // let zsq = v.z * v.z;
-  //
-  // let txy = t * v.x * v.y;
-  // let txz = t * v.x * v.z;
-  // let tyz = t * v.y * v.z;
-  //
-  // let sz = s * v.z;
-  // let sy = s * v.y;
-  // let sx = s * v.x;
-
-  // this._m = Matrix.mult2DArrays(this._m, [
-  //   [t * xsq + c, txy - sz, txz + sy, 0.0],
-  //   [txy + sz, t * ysq + c, tyz - sx, 0.0],
-  //   [txz - sy, tyz + sx, t * zsq + c, 0.0],
-  //   [0.0, 0.0, 0.0, 1.0]
-  // ]);
-  // return this;
-  // }
-
-  // rotateX(angle) {
-  //   let cos = Math.cos(angle);
-  //   let sin = Math.sin(angle);
-  //   this._m = Matrix.mult2DArrays(this._m, [
-  //     [1.0, 0.0, 0.0, 0.0],
-  //     [0.0, cos, -sin, 0.0],
-  //     [0.0, sin, cos, 0.0],
-  //     [0.0, 0.0, 0.0, 1.0]
-  //   ]);
-  //   return this;
-  // }
-
-  // rotateY(angle) {
-  //   let cos = Math.cos(angle);
-  //   let sin = Math.sin(angle);
-  //   this._m = Matrix.mult2DArrays(this._m, [
-  //     [cos, 0.0, sin, 0.0],
-  //     [0.0, 1.0, 0.0, 0.0],
-  //     [-sin, 0.0, cos, 0.0],
-  //     [0.0, 0.0, 0.0, 1.0]
-  //   ]);
-  //   return this;
-  // }
-
-  // rotateZ(angle) {
-  //   let cos = Math.cos(angle);
-  //   let sin = Math.sin(angle);
-  //   this._m = Matrix.mult2DArrays(this._m, [
-  //     [cos, -sin, 0.0, 0.0],
-  //     [sin, cos, 0.0, 0.0],
-  //     [0.0, 0.0, 1.0, 0.0],
-  //     [0.0, 0.0, 0.0, 1.0]
-  //   ]);
-  //   return this;
-  // }
 
   reset() {
     this.set(1.0, 0.0, 0.0, 0.0,
@@ -205,7 +154,17 @@ Matrix4x4.model = function(v, localSpace,
     v.to4Array());
 }
 
-// TODO Screen.
+// TODO Needs testing.
+Matrix4x4.screen = function(v, cnvs,
+  modelView = Matrix4x4.identity,
+  projection = Matrix4x4.identity) {
+  let o = Matrix4x4.convertCoord(modelView._m, projection._m, v.to4Array());
+  o.add([Vector.identity]);
+  o.scale(.5);
+  o._x * cnvs.width;
+  o._y * cnvs.height;
+  return o;
+}
 
 Matrix4x4.identity = new Matrix4x4(
   1.0, 0.0, 0.0, 0.0,

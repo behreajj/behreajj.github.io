@@ -99,6 +99,37 @@ CubicBezier.calcTransforms = function(pt0, pt1, pt2, pt3, lod) {
   return result;
 }
 
+CubicBezier.drawPointLabel2d = function(ctx,
+  label,
+  vec = Vector.zero,
+  isEmphasized = false,
+  highlightColor = '#ffffff') {
+  if (isEmphasized) {
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = highlightColor;
+  } else {
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#000000';
+  }
+  ctx.fillStyle = 'rgba(0, 0, 0, .85)';
+
+  // Draw background arc.
+  ctx.beginPath();
+  ctx.arc(vec.x, vec.y, 12, 0, Math.TWO_PI);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Draw font.
+  ctx.fillStyle = highlightColor;
+  ctx.fillText(label, vec.x, vec.y);
+}
+
+CubicBezier.basisMatrix = new Matrix4x4(
+  1.0, 0.0, 0.0, 0.0,
+  -3.0, 3.0, 0.0, 0.0,
+  3.0, -6.0, 3.0, 0.0,
+  -1.0, 3.0, -3.0, 1.0);
 CubicBezier.defaultConstructionWidth = 0.75;
 CubicBezier.defaultConstructionStyle = 'rgba(255, 255, 255, .25)';
 CubicBezier.defaultCurveWidth = 1.5;

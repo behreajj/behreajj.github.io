@@ -10,13 +10,14 @@ class CubicBezierLoop extends CubicBezierSpline {
     super(pts);
     if (this._curves.length > 1) {
       this.matchAnchorPointsForward();
-      this.alignControlPointsForward();
+      this.mirrorControlPointsForward();
     } else {
       // TODO Deal with edge case where loop is
       // only 1 curve long.
     }
   }
 
+  // @Override
   adjust(curveIndex, pointIndex,
     x, y, z,
     cpforward = CubicBezierSpline.alignControlPoint0,
@@ -82,6 +83,7 @@ class CubicBezierLoop extends CubicBezierSpline {
     }
   }
 
+  // @Override
   calcPoints(lod) {
     let result = [];
     for (let i = 0; i < lod; ++i) {
@@ -90,6 +92,7 @@ class CubicBezierLoop extends CubicBezierSpline {
     return result;
   }
 
+  // @Override
   calcTangents(lod) {
     let result = [];
     for (let i = 0; i < lod; ++i) {
@@ -98,6 +101,7 @@ class CubicBezierLoop extends CubicBezierSpline {
     return result;
   }
 
+  // @Override
   calcTransforms(lod) {
     let result = [];
     for (let i = 0; i < lod; ++i) {
@@ -106,11 +110,8 @@ class CubicBezierLoop extends CubicBezierSpline {
     return result;
   }
 
-  drawPointLabels2d(ctx,
-    curreditcurve = 0,
-    curreditpoint = 0,
-    fontSize = CubicBezierSpline.defaultFontSize,
-    fontFace = CubicBezierSpline.defaultFontFace) {
+  // @Override
+  drawPointLabels2d(ctx, curreditpoint, curreditcurve) {
     let sz = this._curves.length;
     let sz2 = this.getPointCount();
 
@@ -119,7 +120,7 @@ class CubicBezierLoop extends CubicBezierSpline {
     let curveemph = curreditcurve === 0;
     let emphasize = (curveemph && curreditpoint === 0) ||
       (curreditcurve === (sz - 1) && curreditpoint === 3);
-    this.drawPointLabel2d(ctx, 0, this._curves[0]._ap0, emphasize, clr);
+    CubicBezier.drawPointLabel2d(ctx, 0, this._curves[0]._ap0, emphasize, clr);
 
     for (let i = 0, j = 0; i < sz; ++i) {
       let curve = this._curves[i];
@@ -127,11 +128,11 @@ class CubicBezierLoop extends CubicBezierSpline {
 
       clr = '#ff007f';
       emphasize = curveemph && curreditpoint === 1;
-      this.drawPointLabel2d(ctx, ++j, curve._cp0, emphasize, clr);
+      CubicBezier.drawPointLabel2d(ctx, ++j, curve._cp0, emphasize, clr);
 
       clr = '#7f00ff';
       emphasize = curveemph && curreditpoint === 2;
-      this.drawPointLabel2d(ctx, ++j, curve._cp1, emphasize, clr);
+      CubicBezier.drawPointLabel2d(ctx, ++j, curve._cp1, emphasize, clr);
 
       if (i == sz - 1) {
         break;
@@ -140,38 +141,39 @@ class CubicBezierLoop extends CubicBezierSpline {
       clr = '#007fff';
       emphasize = (curveemph && curreditpoint === 3) ||
         (curreditcurve === (i + 1) && curreditpoint === 0);
-      this.drawPointLabel2d(ctx, ++j, curve._ap1, emphasize, clr);
+      CubicBezier.drawPointLabel2d(ctx, ++j, curve._ap1, emphasize, clr);
     }
   }
 
-  getClass() {
-    return this.constructor.name;
-  }
-
+  // @Override
   matchAnchorPointsBackward() {
     for (let i = 0, sz = this._curves.length; i < sz; ++i) {
       this.matchAnchorPoint1(i == sz - 1 ? 0 : i + 1, i);
     }
   }
 
+  // @Override
   matchAnchorPointsForward() {
     for (let i = 0, sz = this._curves.length; i < sz; ++i) {
       this.matchAnchorPoint0(i == 0 ? sz - 1 : i - 1, i);
     }
   }
 
+  // @Override
   mirrorControlPointsBackward() {
     for (let i = 0, sz = this._curves.length; i < sz; ++i) {
       this.mirrorControlPoint1(i == sz - 1 ? 0 : i + 1, i);
     }
   }
 
+  // @Override
   mirrorControlPointsForward() {
     for (let i = 0, sz = this._curves.length; i < sz; ++i) {
       this.mirrorControlPoint0(i == 0 ? sz - 1 : i - 1, i);
     }
   }
 
+  // @Override
   to1DArray() {
     let result = [this._curves[0].ap0];
     for (let i = 0, sz = this._curves.length; i < sz; ++i) {
@@ -185,6 +187,7 @@ class CubicBezierLoop extends CubicBezierSpline {
     return result;
   }
 
+  // @Override
   to2DArray() {
     let result = [this._curves[0].ap0.toArray()];
     for (let i = 0, sz = this._curves.length; i < sz; ++i) {
@@ -198,6 +201,7 @@ class CubicBezierLoop extends CubicBezierSpline {
     return result;
   }
 
+  // @Override
   toString(pr = 2) {
     let result = '[' + this._curves[0].ap0.toString(pr);
     for (let i = 0, sz = this._curves.length; i < sz; ++i) {

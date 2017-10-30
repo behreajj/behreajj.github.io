@@ -11,6 +11,9 @@ class CubicBezierCurve extends CubicBezier {
     this._cp0 = cp0.copy();
     this._cp1 = cp1.copy();
     this._ap1 = ap1.copy();
+
+    // For the purposes of rotating the curve.
+    // this._center = this.calcPoint(.5);
   }
 
   // TODO The problem with these is that curve.ap0.set(0, 0, 0)
@@ -48,7 +51,6 @@ class CubicBezierCurve extends CubicBezier {
     this._cp1.set(v.x, v.y, v.z);
   }
 
-  // TODO Requires testing.
   adjust(pointIndex,
     x, y, z = 0) {
     switch (pointIndex) {
@@ -56,32 +58,30 @@ class CubicBezierCurve extends CubicBezier {
         this._ap0.set(x, y, z);
         break;
       case CubicBezierCurve.pointLayout.ControlPoint0:
-        curve._cp0.set(x, y, z);
+        this._cp0.set(x, y, z);
         break;
       case CubicBezierCurve.pointLayout.ControlPoint1:
-        curve._cp1.set(x, y, z);
+        this._cp1.set(x, y, z);
+        break;
       case CubicBezierCurve.pointLayout.AnchorPoint1:
-        curve._ap1.set(x, y, z);
+        this._ap1.set(x, y, z);
         break;
       default:
         console.error('Invalid point index. Must be 0 (ap0), 1 (cp0), 2 (cp1) or 3 (ap1).');
     }
   }
 
-  // Was used in matrix rotation.
-  // applyModel(local, modview, caminv) {
-  //   let mv = modview.copy();
-  //   mv.mult(local);
-  //   return this.applyLocalModel(mv, caminv);
-  // }
-  //
-  // applyLocalModel(mv, caminv) {
-  //   this._ap0.applyLocalModel(mv, caminv);
-  //   this._cp0.applyLocalModel(mv, caminv);
-  //   this._cp1.applyLocalModel(mv, caminv);
-  //   this._ap1.applyLocalModel(mv, caminv);
-  //   return this;
-  // }
+  applyMatrix(m) {
+    return this.apply2DArray(m._m);
+  }
+
+  apply2DArray(arr) {
+    this._ap0.apply2DArray(arr);
+    this._cp0.apply2DArray(arr);
+    this._cp1.apply2DArray(arr);
+    this._ap1.apply2DArray(arr);
+    return this;
+  }
 
   calcPoint(st) {
     return CubicBezier.calcPoint(this._ap0, this._cp0, this._cp1, this._ap1, st);
@@ -127,20 +127,31 @@ class CubicBezierCurve extends CubicBezier {
     ctx.stroke();
   }
 
-  // drawConstruction2d(ctx,
-  //   strokeStyle = CubicBezier.defaultConstructionStyle,
-  //   lineWidth = CubicBezier.defaultConstructionWidth) {
-  //   ctx.strokeStyle = strokeStyle;
-  //   ctx.lineWidth = lineWidth;
-  //
-  //   ctx.beginPath();
-  //   ctx.moveTo(this._ap0.x, this._ap0.y);
-  //   ctx.lineTo(this._ap1.x, this._ap1.y);
-  //   ctx.lineTo(this._cp1.x, this._cp1.y);
-  //   ctx.lineTo(this._cp0.x, this._cp0.y);
-  //   ctx.closePath();
-  //   ctx.stroke();
-  // }
+  drawConstruction2d(ctx,
+    strokeStyle = CubicBezier.defaultConstructionStyle,
+    lineWidth = CubicBezier.defaultConstructionWidth) {
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = lineWidth;
+
+    ctx.beginPath();
+    ctx.moveTo(this._ap0.x, this._ap0.y);
+    ctx.lineTo(this._cp0.x, this._cp0.y);
+    ctx.lineTo(this._cp1.x, this._cp1.y);
+    ctx.lineTo(this._ap1.x, this._ap1.y);
+    ctx.moveTo(this._ap1.x, this._ap1.y);
+    ctx.closePath();
+    ctx.stroke();
+  }
+
+  drawPointLabels2d(ctx, curreditpoint) {
+    CubicBezier.drawPointLabel2d(ctx, 'AP0', this._ap0, curreditpoint === CubicBezierCurve.pointLayout.AnchorPoint0, '#00ff7f');
+
+    CubicBezier.drawPointLabel2d(ctx, 'CP0', this._cp0, curreditpoint === CubicBezierCurve.pointLayout.ControlPoint0, '#ff007f');
+
+    CubicBezier.drawPointLabel2d(ctx, 'CP1', this._cp1, curreditpoint === CubicBezierCurve.pointLayout.ControlPoint1, '#7f00ff');
+
+    CubicBezier.drawPointLabel2d(ctx, 'AP1', this._ap1, curreditpoint === CubicBezierCurve.pointLayout.AnchorPoint1, '#007fff');
+  }
 
   // TODO Needs testing.
   equals(v) {
@@ -152,10 +163,10 @@ class CubicBezierCurve extends CubicBezier {
       return false;
     }
 
-    return this._ap0.equals(v.ap0) &&
-      this._cp0.equals(v.cp0) &&
-      this._cp1.equals(v.cp1) &&
-      this._ap1.equals(v.ap1);
+    return this._ap0.equals(v._ap0) &&
+      this._cp0.equals(v._cp0) &&
+      this._cp1.equals(v._cp1) &&
+      this._ap1.equals(v._ap1);
   }
 
   getClass() {
@@ -170,11 +181,54 @@ class CubicBezierCurve extends CubicBezier {
     return this;
   }
 
+  rotateX(a) {
+    let cos = Math.cos(a);
+    let sin = Math.sin(a);
+    return this.apply2DArray([
+      [1.0, 0.0, 0.0, 0.0],
+      [0.0, cos, -sin, 0.0],
+      [0.0, sin, cos, 0.0],
+      [0.0, 0.0, 0.0, 1.0]
+    ]);
+  }
+
+  rotateY(a) {
+    let cos = Math.cos(a);
+    let sin = Math.sin(a);
+    return this.apply2DArray([
+      [cos, 0.0, sin, 0.0],
+      [0.0, 1.0, 0.0, 0.0],
+      [-sin, 0.0, cos, 0.0],
+      [0.0, 0.0, 0.0, 1.0]
+    ]);
+  }
+
   rotateZ(a) {
-    this._ap0.rotateZ(a);
-    this._cp0.rotateZ(a);
-    this._cp1.rotateZ(a);
-    this._ap1.rotateZ(a);
+    let cos = Math.cos(a);
+    let sin = Math.sin(a);
+    let pt, xt;
+
+    pt = this._ap0;
+    xt = pt._x;
+    pt._x = xt * cos - pt._y * sin;
+    pt._y = xt * sin + pt._y * cos;
+
+    pt = this._cp0;
+    xt = pt._x;
+    pt._x = xt * cos - pt._y * sin;
+    pt._y = xt * sin + pt._y * cos;
+
+    pt = this._cp1;
+    xt = pt._x;
+    pt._x = xt * cos - pt._y * sin;
+    pt._y = xt * sin + pt._y * cos;
+
+    pt = this._ap1;
+    xt = pt._x;
+    pt._x = xt * cos - pt._y * sin;
+    pt._y = xt * sin + pt._y * cos;
+
+    return this;
   }
 
   scale(s) {
@@ -200,14 +254,18 @@ class CubicBezierCurve extends CubicBezier {
     ];
   }
 
-  // TODO toSvgPath Needs testing.
-  toSvgPath(pr = 2, stroke = '#000000', fill = 'transparent') {
+  toSvgPath(fill = 'transparent',
+    stroke = '#000000',
+    strokeWeight = 1,
+    pr = 2) {
     return '<path d="M ' + this._ap0.x.toFixed(pr) + ' ' + this._ap0.y.toFixed(pr) +
       ' C ' + this._cp0.x.toFixed(pr) + ' ' + this._cp0.y.toFixed(pr) + ', ' +
       this._cp1.x.toFixed(pr) + ' ' + this._cp1.y.toFixed(pr) + ', ' +
       this._ap1.x.toFixed(pr) + ' ' + this._ap1.y.toFixed(pr) +
+      '" fill="' + fill +
       '" stroke="' + stroke +
-      '" fill="' + fill + '" />';
+      '" stroke-width="' + strokeWeight +
+      '" stroke-linecap="round" stroke-linejoin="round" />';
   }
 
   toString(pr = 2) {
@@ -236,6 +294,7 @@ CubicBezierCurve.random = function(minx = -1, maxx = 1,
     Vector.random(minx, maxx, miny, maxy, minz, maxz),
     Vector.random(minx, maxx, miny, maxy, minz, maxz));
 }
+
 CubicBezierCurve.pointLayout = {
   AnchorPoint0: 0,
   AnchorPoint1: 3,

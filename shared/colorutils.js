@@ -2,6 +2,9 @@ class ColorUtils {
 
 }
 
+//THREEJS Reference
+//( this.r * 255 ) << 16 ^ ( this.g * 255 ) << 8 ^ ( this.b * 255 ) << 0;
+
 ColorUtils.isLittleEndian = true;
 
 ColorUtils.array = function(clr, littleEndian = ColorUtils.isLittleEndian) {
@@ -77,6 +80,8 @@ ColorUtils.easeColorCompositeFromArray = function(x, y, t, littleEndian = ColorU
 
 // For chopping off the alpha and using '#', you'd need to know which endian you have.
 ColorUtils.hexString = function(n) {
+  //THREE JS Reference:
+  //( '000000' + this.getHex().toString( 16 ) ).slice( - 6 );
   return '0x' + (n >>> 0).toString(16);
 }
 

@@ -46,16 +46,13 @@ class TwoDCnvs extends Cnvs {
     this.updateImageData();
   }
 
-  getClass() {
-    return this.constructor.name;
+  background(clr, center = Vector.zero) {
+    this._ctx.fillStyle = clr;
+    this._ctx.fillRect(-center.x, -center.y, this._width, this._height);
   }
 
-  resize(w, h, styleW = this._style.width, styleH = this._style.height) {
-    this._cnvs.width = this._width = w;
-    this._cnvs.height = this._height = h;
-    this._style.width = styleW;
-    this._style.height = styleH;
-    this.updateImageData();
+  getClass() {
+    return this.constructor.name;
   }
 
   getDataLength() {
@@ -89,6 +86,22 @@ class TwoDCnvs extends Cnvs {
     this._ctx.resetTransform();
   }
 
+  rotate(a) {
+    this._ctx.rotate(a);
+  }
+
+  resize(w, h, styleW = this._style.width, styleH = this._style.height) {
+    this._cnvs.width = this._width = w;
+    this._cnvs.height = this._height = h;
+    this._style.width = styleW;
+    this._style.height = styleH;
+    this.updateImageData();
+  }
+
+  scale(x, y) {
+    this._ctx.scale(x, y);
+  }
+
   // TODO Look up CSS format for single line font.
   setFont(weight, size, fontf, align = 'center', baseline = 'middle') {
     this._ctx.font = weight + size + fontf;
@@ -96,23 +109,15 @@ class TwoDCnvs extends Cnvs {
     this._ctx.textBaseline = baseline;
   }
 
-  // rotate(a) {
-  //   this._ctx.rotate(a);
-  // }
-  //
-  // scale(x, y) {
-  //   this._ctx.scale(x, y);
-  // }
-  //
-  // translate(v) {
-  //   this._ctx.translate(v.x, v.y);
-  // }
-  //
-  // transform(m00 = 1, m10 = 0,
-  //   m01 = 0, m11 = 1,
-  //   m02 = 0, m12 = 0) {
-  //   this._ctx.transform(m00, m10, m01, m11, m02, m12);
-  // }
+  translate(v) {
+    this._ctx.translate(v.x, v.y);
+  }
+
+  transform(m00 = 1, m10 = 0,
+    m01 = 0, m11 = 1,
+    m02 = 0, m12 = 0) {
+    this._ctx.transform(m00, m10, m01, m11, m02, m12);
+  }
 
   updateImageData() {
     this._imgData = this._ctx.getImageData(0, 0, this._width, this._height);

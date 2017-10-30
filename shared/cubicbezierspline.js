@@ -19,6 +19,9 @@ class CubicBezierSpline extends CubicBezier {
         pts[i + 2] ? pts[i + 2] : Vector.random()));
       ap0 = pts[i + 2] ? pts[i + 2] : Vector.random();
     }
+
+    // TODO Needs testing.
+    // this._center = this.calcPoint(.5);
   }
 
   addCurve(curve) {
@@ -128,19 +131,16 @@ class CubicBezierSpline extends CubicBezier {
     }
   }
 
-  // Was used in creating rotation matrices.
-  // applyModel(local, modview, caminv) {
-  //   let mv = modview.copy();
-  //   mv.mult(local);
-  //   return this.applyLocalModel(mv, caminv);
-  // }
-  //
-  // applyLocalModel(mv, caminv) {
-  //   for (let i = 0, sz = this._curves.length; i < sz; ++i) {
-  //     this._curves[i].applyLocalModel(mv, caminv);
-  //   }
-  //   return this;
-  // }
+  applyMatrix(m) {
+    return this.apply2DArray(m._m);
+  }
+
+  apply2DArray(arr) {
+    for (let i = 0, sz = this._curves.length; i < sz; ++i) {
+      this._curves[i].apply2DArray(arr);
+    }
+    return this;
+  }
 
   calcPoint(st) {
     if (this._curves.length === 1 || st <= 0.0) {
@@ -267,44 +267,8 @@ class CubicBezierSpline extends CubicBezier {
     ctx.stroke();
   }
 
-  drawPointLabel2d(ctx,
-    label,
-    vec = Vector.zero,
-    isEmphasized = false,
-    highlightColor = '#ffffff',
-    fontSize = CubicBezierSpline.defaultFontSize,
-    fontFace = CubicBezierSpline.defaultFontFace) {
-
-    if (isEmphasized) {
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = highlightColor;
-    } else {
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = '#000000';
-    }
-    ctx.fillStyle = 'rgba(0, 0, 0, .85)';
-
-    // Draw background arc.
-    ctx.beginPath();
-    ctx.arc(vec.x, vec.y, fontSize, 0, Math.TWO_PI);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Draw font.
-    // ctx.font = fontSize + 'px ' + fontFace;
-    // ctx.textAlign = 'center';
-    // ctx.textBaseline = 'middle';
-    ctx.fillStyle = highlightColor;
-    ctx.fillText(label, vec.x, vec.y);
-  }
-
   // TODO Emphasis not properly displayed.
-  drawPointLabels2d(ctx,
-    curreditcurve = 0,
-    curreditpoint = 0,
-    fontSize = CubicBezierSpline.defaultFontSize,
-    fontFace = CubicBezierSpline.defaultFontFace) {
+  drawPointLabels2d(ctx, curreditpoint, curreditcurve) {
     let sz = this._curves.length;
     let sz2 = this.getPointCount();
 
@@ -312,7 +276,7 @@ class CubicBezierSpline extends CubicBezier {
     let clr = '#007fff';
     let curveemph = curreditcurve === 0;
     let emphasize = curveemph && curreditpoint === 0;
-    this.drawPointLabel2d(ctx, 0, this._curves[0]._ap0, emphasize, clr);
+    CubicBezier.drawPointLabel2d(ctx, 0, this._curves[0]._ap0, emphasize, clr);
 
     for (let i = 0, j = 0; i < sz; ++i) {
       let curve = this._curves[i];
@@ -320,15 +284,15 @@ class CubicBezierSpline extends CubicBezier {
 
       clr = '#ff007f';
       emphasize = curveemph && curreditpoint === 1;
-      this.drawPointLabel2d(ctx, ++j, curve._cp0, emphasize, clr);
+      CubicBezier.drawPointLabel2d(ctx, ++j, curve._cp0, emphasize, clr);
 
       clr = '#7f00ff';
       emphasize = curveemph && curreditpoint === 2;
-      this.drawPointLabel2d(ctx, ++j, curve._cp1, emphasize, clr);
+      CubicBezier.drawPointLabel2d(ctx, ++j, curve._cp1, emphasize, clr);
 
       clr = '#007fff';
       emphasize = curveemph && curreditpoint === 3;
-      this.drawPointLabel2d(ctx, ++j, curve._ap1, emphasize, clr);
+      CubicBezier.drawPointLabel2d(ctx, ++j, curve._ap1, emphasize, clr);
     }
   }
 
@@ -412,6 +376,29 @@ class CubicBezierSpline extends CubicBezier {
     console.table(this.to2DArray());
   }
 
+  rotateX(a) {
+    let cos = Math.cos(a);
+    let sin = Math.sin(a);
+    return this.apply2DArray([
+      [1.0, 0.0, 0.0, 0.0],
+      [0.0, cos, -sin, 0.0],
+      [0.0, sin, cos, 0.0],
+      [0.0, 0.0, 0.0, 1.0]
+    ]);
+  }
+
+  rotateY(a) {
+    let cos = Math.cos(a);
+    let sin = Math.sin(a);
+    return this.apply2DArray([
+      [cos, 0.0, sin, 0.0],
+      [0.0, 1.0, 0.0, 0.0],
+      [-sin, 0.0, cos, 0.0],
+      [0.0, 0.0, 0.0, 1.0]
+    ]);
+  }
+
+  // TODO Can this be made more efficient?
   rotateZ(a) {
     for (let i = 0, sz = this._curves.length; i < sz; ++i) {
       this._curves[i].rotateZ(a);
@@ -462,12 +449,14 @@ class CubicBezierSpline extends CubicBezier {
     return result;
   }
 
-  // TODO spline toSvgPath needs testing. Is there a more
-  // efficient way to do this than separate paths?
-  toSvgPath(pr = 2, stroke = '#000000', fill = 'transparent') {
+  // TODO spline toSvgPath needs testing.
+  toSvgPath(fill = 'transparent',
+    stroke = '#000000',
+    strokeWeight = 1,
+    pr = 2) {
     let result = '';
     for (let i = 0, sz = this._curves.length; i < sz; ++i) {
-      result += this._curves[i].toSvgPath(pr, stroke, fill);
+      result += this._curves[i].toSvgPath(fill, stroke, strokeWeight, pr);
       if (i < sz - 1) {
         result += '\n';
       }
@@ -493,10 +482,6 @@ CubicBezierSpline.random = function(minx = -1, maxx = 1,
     ]);
 }
 
-CubicBezierSpline.defaultFontSize = 12;
-CubicBezierSpline.defaultFontFace = 'sans-serif';
-
-// TODO: If you create a bezier curve/spline editor, these should be removed there.
 CubicBezierSpline.alignControlPoint0 = function(curves, sourceIndex, targetIndex) {
   let source = curves[sourceIndex];
   let target = curves[targetIndex];
@@ -531,3 +516,6 @@ CubicBezierSpline.mirrorControlPoint1 = function(curves, sourceIndex, targetInde
     .add(source.ap0
       .sub(source.cp0));
 }
+
+// CubicBezierSpline.defaultFontSize = 12;
+// CubicBezierSpline.defaultFontFace = 'sans-serif';

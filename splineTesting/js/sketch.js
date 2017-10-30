@@ -1,74 +1,53 @@
 'use strict';
 
-function pattern(j, rd, jprc) {
-  let theta = Math.TWO_PI * jprc;
-  let scl = j % 2 == 0 ? 1 : .5;
-  return new Vector(Math.cos(theta) * scl, Math.sin(theta) * scl, 0);
-}
-
 /* TODO MAIN LIST
+ * Download a to do
+ * Basis matrix of a curve.
  * Look up how 4x4matrix determinants work
  * so you can invert a matrix.
- * http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm
  * Look at wavefront obj spec for vts.
- * Calculate uvs.
  * Catmull-Rom splines
  * Torsion
- * Break instructions into spans within main div. (Reuse code
- * from personal portfolio.)
  * Key events / key listener / stack.
  */
 
-const knownIssues = `ISSUES:
+function pattern(i, ld, iprc, j, rd, jprc) {
+  let theta = Math.TWO_PI * jprc;
+  // let scl = j % 2 === 0 ? 1 : .5;
+  let scl = Math.tri(j, 3, 0.1, 1);
+  return new Vector(Math.cos(theta) * scl, Math.sin(theta) * scl, 0);
+}
 
-+ Key events for canvas transformations should either toggle a true/false state which triggers the transformations in draw, be worked into a key listener and/or pushed onto a stack. Otherwise the effect is jerky and simultaneous key presses interrupt each other.
-
-+ Torsion results in normals (binormals? not always clear in 2d context) flipping. Geometry then becomes knotted. Needs to be a way to make all normals/binormals same direction, or to ease gradually from first to final anchorpoint. And/or, more sophisticated, increase number/weighting of transforms on tight curves.
-`;
-console.log(knownIssues);
-
-// const controlsText = `<b>CONTROLS</b><br\>
-// LMB: .<br\>
-// RMB: Cycle through points on curve.<br\>
-// MMB: Cycle through curves on spline.<br\><br\>
-// A: Toggle mesh display.<br\>
-// D: Mirrored control point adjust.<br\>
-// E: Mouse Y changes Point Z.<br\>
-// F: Free control point adjust.<br\>
-// G: Toggle control net.<br\>
-// Q: Take screen capture (.png).<br\>
-// S: Save in .obj format.<br\>
-// W: New random curve.<br\><br\>
-// 8 / UP: Translate up.<br\>
-// 6 / RIGHT: Translate right.<br\>
-// 4 / LEFT : Translate left.<br\>
-// 2 / DOWN: Translate down.
-// `;
+const curvesperspline = 7;
+const lindetail = 256;
+const raddetail = 9;
+var spline = null;
+var taper = [25, 50, 12.5, 50, 25];
 
 const controls = [
   [`LMB`, `Adjust selected point`],
   [`RMB`, `Cycle selected point on curve`],
   [`MMB`, `Cycle selected curve on spline`],
   ['A', 'Toggle mesh display'],
-  ['D', 'Mirror control points on adjust'],
+  ['D', 'Mirror control points adjust'],
   ['E', 'Mouse y changes point z'],
-  ['F', 'Free control points on adjust'],
+  ['F', 'Free control points adjust'],
   ['G', 'Toggle control net'],
   ['Q', 'Screen capture (.png)'],
   ['S', 'Save mesh (.obj)'],
   ['W', 'New random curve'],
+  ['X', 'Rotate x'],
+  ['C', 'Rotate y'],
+  ['Z', 'Rotate z'],
   ['\u2192 6', 'Translate right'],
   ['\u2193 2', 'Translate down'],
   ['\u2190 4', 'Translate left'],
   ['\u2191 8', 'Translate up'],
-  ['Home 7', 'Scale up'],
-  ['End 1', 'Scale down']
+  ['Hom 7', 'Scale up'],
+  ['End 1', 'Scale down'],
+  ['PgUp 9', 'Fatten'],
+  ['PgDn 3', 'Thin']
 ];
-
-// V: Reverse rotation direction.<br\>
-// X: Rotate on X-axis.<br\>
-// C: Rotate on Y-axis.<br\>
-// Z: Rotate on Z-axis.
 
 const EditModes = {
   mouseYtoY: 0,
@@ -80,7 +59,7 @@ const MeshModes = {
   edges: 2,
   faces: 3
 }
-const rotateSpeed = .0003;
+const rotateSpeed = .025;
 const bkgcolor = 'rgb(25, 25, 25)';
 
 var framecount = 0;
@@ -97,40 +76,25 @@ var adjustForward = CubicBezierSpline.alignControlPoint0;
 var adjustBackward = CubicBezierSpline.alignControlPoint1;
 var currEditMode = EditModes.mouseYtoY;
 var showControlNet = true;
-var showMesh = MeshModes.edges;
+var showMesh = MeshModes.faces;
 var rotateDir = 1;
 const translationSpeed = 2;
 const upscalar = 1.1;
 const downscalar = 1 / upscalar;
+const fattenSpeed = 1;
 
-// Walker
-// var walkerstep = 0;
-// var walkerspeed = curvesperspline / 800.0;
-// var walkerdiv = null;
-
-
-// Spline details.
-var spline = null;
-var curvesperspline = 5;
 
 // Mesh
-var lindetail = 64;
-var raddetail = 10;
 var crossSectionScalars = [];
 var verts = [];
 var indices = [];
 var faces = [];
 var uvs = [];
 var norms = [];
-var taper = [25, 50, 12.5, 50, 25];
 
 // Export
 var objUrl;
 var fileName = 'blob.obj';
-
-// World
-var modelView = new Matrix4x4();
-var cameraInverse = new Matrix4x4();
 
 window.onload = setup
 
@@ -140,15 +104,17 @@ function setup(e) {
   cnvs.setFont('bold', '12px', 'sans-serif');
 
   center.set(cnvs.width * .5, cnvs.height * .5, 0);
+  cnvs.translate(center);
 
-  spline = randomCurve(lindetail);
+  spline = initCurve(lindetail, -center.x, center.x, -center.y, center.y, -center.x, center.x);
 
+  initTaper(7, 10, 50);
   initCrossSectionScalars(lindetail, taper, Math.smootherStep);
   initVertices(spline, lindetail, raddetail);
   initIndices(lindetail, raddetail);
   initFaces(lindetail, raddetail);
-  initUvs(lindetail, raddetail);
-  initNorms(lindetail, raddetail);
+  // initUvs(lindetail, raddetail);
+  // initNorms(lindetail, raddetail);
 
   initControls(document.body);
 
@@ -168,9 +134,7 @@ function setup(e) {
 function draw(e) {
   framecount++;
 
-  // Draw background.
-  cnvs.ctx.fillStyle = bkgcolor;
-  cnvs.ctx.fillRect(0, 0, cnvs.width, cnvs.height);
+  cnvs.background(bkgcolor, center);
 
   switch (showMesh) {
     case MeshModes.faces:
@@ -191,26 +155,11 @@ function draw(e) {
 
   if (showControlNet) {
     spline.drawConstruction2d(cnvs.ctx);
-    spline.drawPointLabels2d(cnvs.ctx, curreditcurve, curreditpoint);
+    spline.drawPointLabels2d(cnvs.ctx, curreditpoint, curreditcurve);
   }
 
-  // Draw spline walker.
-  // drawWalker(cnvs.ctx, (walkerstep += walkerspeed) % 1);
-  // div.style.transform = spline.calcTransform(walkerstep).toCss2d();
-
-  // Request next frame.
   window.requestAnimationFrame(draw);
 }
-
-// function drawIndexLabel(ctx, label, x, y, clr) {
-//   ctx.lineWidth = 1;
-//   ctx.strokeStyle = clr;
-//   ctx.fillStyle = '#000'
-//   ctx.strokeRect(x - 12, y - 7, 24, 14);
-//   ctx.fillRect(x - 12, y - 7, 24, 14);
-//   ctx.fillStyle = clr;
-//   ctx.fillText(label, x, y);
-// }
 
 function drawQuad2dFill(ctx, v00, v10, v11, v01, clr = '#fff') {
   ctx.fillStyle = clr;
@@ -287,11 +236,59 @@ function drawWalker(ctx, t) {
   ctx.resetTransform();
 }
 
+function initControls(elt) {
+  let panel = document.createElement('div');
+  panel.id = 'controlPanel';
+  panel.style.opacity = .25;
+
+  let header = document.createElement('div');
+  header.id = 'controlHeader';
+  header.textContent = 'CONTROLS';
+  panel.appendChild(header);
+
+  for (let i = 0, sz0 = controls.length; i < sz0; ++i) {
+    let div = document.createElement('div');
+    div.id = 'row' + i;
+    div.className = 'controlRow';
+    for (let j = 0, sz1 = controls[i].length; j < sz1; ++j) {
+      let span = document.createElement('span');
+      span.id = 'col' + j;
+      span.className = 'controlCol'
+      span.textContent = controls[i][j];
+      div.appendChild(span);
+    }
+    panel.appendChild(div);
+  }
+
+  panel.onmouseover = function(e) {
+    panel.style.opacity = 1.0;
+  }
+  panel.onmouseout = function(e) {
+    panel.style.opacity = .125;
+  }
+
+  elt.appendChild(panel);
+}
+
 function initCrossSectionScalars(ld, tpr, func) {
   let ldf = ld - 1;
   for (let i = 0; i < ld; ++i) {
     crossSectionScalars.push(Math.easeArray(tpr, i / ldf, func));
   }
+}
+
+function initCurve(lod, xmin = 0, xmax = window.innerWidth, ymin = 0, ymax = window.innerHeight, zmin = -window.innerWidth * 0.5, zmax = window.innerWidth * 0.5) {
+  let rndvec = [];
+
+  rndvec.push(Vector.random(xmin, xmax, ymin, ymax, zmin, zmax));
+  for (let i = 0; i < curvesperspline; ++i) {
+    rndvec.push(Vector.random(xmin, xmax, ymin, ymax, zmin, zmax));
+    rndvec.push(Vector.random(xmin, xmax, ymin, ymax, zmin, zmax));
+    rndvec.push(Vector.random(xmin, xmax, ymin, ymax, zmin, zmax));
+  }
+
+  return new CubicBezierLoop(rndvec, lod);
+  // return new CubicBezierCurve(rndvec[0], rndvec[1], rndvec[2], rndvec[3]);
 }
 
 function initFaces(ld, rd) {
@@ -315,69 +312,42 @@ function initIndices(ld, rd) {
   }
 }
 
-//TODO Convert instructions to a 2D array.
-function initControls(elt) {
-  let panel = document.createElement('div');
-  panel.textContent = 'CONTROLS';
-  panel.id = 'controlPanel';
-  panel.style.opacity = .25;
-
-  for (let i = 0, sz0 = controls.length; i < sz0; ++i) {
-    let div = document.createElement('div');
-    div.id = 'row' + i;
-    div.className = 'controlRow';
-    for (let j = 0, sz1 = controls[i].length; j < sz1; ++j) {
-      let span = document.createElement('span');
-      span.id = 'col' + j;
-      span.className = 'controlCol'
-      span.textContent = controls[i][j];
-      div.appendChild(span);
-      // let div = document.createElement('div');
-      // div.id = '[' + i + ',' + j + ']'
-      // div.class = 'controlPanelEntry';
-      // div.textContent = controls[i][j];
-      // panel.appendChild(div);
-    }
-    panel.appendChild(div);
-  }
-
-  panel.onmouseover = function(e) {
-    panel.style.opacity = 1.0;
-  }
-  panel.onmouseout = function(e) {
-    panel.style.opacity = .25;
-  }
-
-  elt.appendChild(panel);
-}
-
-// TODO Dosn't work. Needs testing.
-function initUvs(ld, rd) {
-  uvs = [];
-  let idf = ld - 1;
-  let rdf = rd - 1;
-  let iprc = 0;
-  let jprc = 0;
-  for (let i = 0, j; i < ld; ++i) {
-    iprc = i / idf;
-    uvs.push([]);
-    for (j = 0; j < rd; ++j) {
-      jprc = j / rdf;
-      uvs[i].push(new Vector(iprc, jprc, 0));
-    }
-  }
-}
+// TODO Radial detail doesn't work.
+// Same gap as usual...
+// function initUvs(ld, rd) {
+//   uvs = [];
+//   let idf = ld;
+//   let rdf = rd;
+//   let iprc = 0;
+//   let jprc = 0;
+//   for (let i = 0, j; i < ld; ++i) {
+//     iprc = (i + 1) / idf;
+//     uvs.push([]);
+//     for (j = 0; j < rd + 1; ++j) {
+//       jprc = (j + 1) / rdf;
+//       uvs[i].push(new Vector(iprc, jprc, 0));
+//     }
+//   }
+// }
 
 // Assumes a loop.
-function initNorms(ld, rd) {
-  norms = [];
-  let ldf = ld - 1;
-  for (let i = 0, l = 1, j; i < ld; ++i, ++l) {
-    norms.push([]);
-    for (j = 0; j < rd; ++j) {
-      norms[i].push(Vector.cross(verts[i][j], verts[l % ldf][j]).norm());
-    }
+// function initNorms(ld, rd) {
+//   norms = [];
+//   let ldf = ld - 1;
+//   for (let i = 0, l = 1, j; i < ld; ++i, ++l) {
+//     norms.push([]);
+//     for (j = 0; j < rd; ++j) {
+//       norms[i].push(Vector.cross(verts[i][j], verts[l % ldf][j]).norm());
+//     }
+//   }
+// }
+
+function initTaper(count = 7, min = 10, max = 100) {
+  taper = [];
+  for (let i = 0; i < count; ++i) {
+    taper.push(Math.randomRange(min, max));
   }
+  taper[count - 1] = taper[0];
 }
 
 function initVertices(spl, ld, rd) {
@@ -393,17 +363,22 @@ function initVertices(spl, ld, rd) {
     localSpace = spl.calcTransform(i / ldf);
     scl = crossSectionScalars[i];
     for (j = 0; j < rd; ++j) {
-      verts[i].push(Matrix4x4.model(pattern(j, rd, j / rd).scale(scl),
-        localSpace, modelView, cameraInverse));
+      verts[i].push(pattern(i, ld, i / ldf, j, rd, j / rd).scale(scl).applyMatrix(localSpace));
     }
   }
 }
 
-function updateNorms() {
-  for (let i = 0, l = 1, sz0 = norms.length, ldf = sz0 - 1, j, sz1; i < sz0; ++i, ++l) {
-    for (j = 0, sz1 = norms[i].length; j < sz1; ++j) {
-      norms[i][j] = Vector.cross(verts[i][j], verts[l % ldf][j]).norm();
-    }
+// function updateNorms() {
+//   for (let i = 0, l = 1, sz0 = norms.length, ldf = sz0 - 1, j, sz1; i < sz0; ++i, ++l) {
+//     for (j = 0, sz1 = norms[i].length; j < sz1; ++j) {
+//       norms[i][j] = Vector.cross(verts[i][j], verts[l % ldf][j]).norm();
+//     }
+//   }
+// }
+
+function updateCrossSectionScalars(val) {
+  for (let i = 0, sz = crossSectionScalars.length; i < sz; ++i) {
+    crossSectionScalars[i] += val;
   }
 }
 
@@ -416,8 +391,10 @@ function updateVertices(spl, ld, rd) {
     localSpace = spl.calcTransform(i / ldf);
     scl = crossSectionScalars[i];
     for (j = 0; j < rd; ++j) {
-      verts[i][j] = Matrix4x4.model(pattern(j, rd, j / rd).scale(scl),
-        localSpace, modelView, cameraInverse);
+
+      // With discrete curve/spline this could be more rigid
+      // but faster. Size of cached transforms === level of detail.
+      verts[i][j] = pattern(i, ld, i / ldf, j, rd, j / rd).scale(scl).applyMatrix(localSpace);
     }
   }
 }
@@ -439,30 +416,33 @@ function objString() {
 
 function objStringFaces() {
   let result = [];
+  let index = 0;
   for (let i = 0, sz0 = faces.length, j, sz1; i < sz0; ++i) {
     result.push([]);
     for (j = 0, sz1 = faces[i].length; j < sz1; ++j) {
-      result[i].push(faces[i][j]);
+      index = faces[i][j];
+      // result[i].push(index + '/' + index + '/' + index);
+      result[i].push(index);
     }
     result[i] = 'f ' + result[i].join(' ');
   }
   return result.join('\r\n');
 }
 
-function objStringNorms() {
-  let result = [];
-  let v = null;
-  for (let i = 0, sz0 = norms.length, j, sz1; i < sz0; ++i) {
-    for (j = 0, sz1 = norms[i].length; j < sz1; ++j) {
-      v = norms[i][j];
-      result.push('vn ' +
-        v._x.toFixed(6) + ' ' +
-        v._y.toFixed(6) + ' ' +
-        v._z.toFixed(6));
-    }
-  }
-  return result.join('\r\n');
-}
+// function objStringNorms() {
+//   let result = [];
+//   let v = null;
+//   for (let i = 0, sz0 = norms.length, j, sz1; i < sz0; ++i) {
+//     for (j = 0, sz1 = norms[i].length; j < sz1; ++j) {
+//       v = norms[i][j];
+//       result.push('vn ' +
+//         v._x.toFixed(6) + ' ' +
+//         v._y.toFixed(6) + ' ' +
+//         v._z.toFixed(6));
+//     }
+//   }
+//   return result.join('\r\n');
+// }
 
 function objStringVerts() {
   let result = [];
@@ -479,17 +459,17 @@ function objStringVerts() {
   return result.join('\r\n');
 }
 
-function objStringUvs() {
-  let result = [];
-  let v = null;
-  for (let i = 0, sz0 = uvs.length, j, sz1; i < sz0; ++i) {
-    for (j = 0, sz1 = uvs[i].length; j < sz1; ++j) {
-      v = uvs[i][j];
-      result.push('vt ' + v._x.toFixed(4) + ' ' + v._y.toFixed(4));
-    }
-  }
-  return result.join('\r\n');
-}
+// function objStringUvs() {
+//   let result = [];
+//   let v = null;
+//   for (let i = 0, sz0 = uvs.length, j, sz1; i < sz0; ++i) {
+//     for (j = 0, sz1 = uvs[i].length; j < sz1; ++j) {
+//       v = uvs[i][j];
+//       result.push('vt ' + v._x.toFixed(4) + ' ' + v._y.toFixed(4));
+//     }
+//   }
+//   return result.join('\r\n');
+// }
 
 function objSave() {
   let txt = objString();
@@ -500,17 +480,20 @@ function objSave() {
   elt.click();
 }
 
-function randomCurve(lod, xmin = 0, xmax = window.innerWidth, ymin = 0, ymax = window.innerHeight, zmin = -window.innerHeight * 0.5, zmax = window.innerHeight * 0.5) {
-  let rndvec = [];
-
-  rndvec.push(Vector.random(xmin, xmax, ymin, ymax, zmin, zmax));
-  for (let i = 0; i < curvesperspline; ++i) {
-    rndvec.push(Vector.random(xmin, xmax, ymin, ymax, zmin, zmax));
-    rndvec.push(Vector.random(xmin, xmax, ymin, ymax, zmin, zmax));
-    rndvec.push(Vector.random(xmin, xmax, ymin, ymax, zmin, zmax));
-  }
-
-  return new CubicBezierLoop(rndvec, lod);
+function svgSave(fill = 'transparent',
+  stroke = '#000000',
+  strokeWeight = taper[0]) {
+  let rndname = spline.getClass() + '_' + String.random(5);
+  fileName = rndname + '.svg';
+  let txt = '<?xml version="1.0" encoding="utf-8"?><svg version="1.1" id="' + rndname + '" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 ' + cnvs.width + ' ' + cnvs.height + '" xml:space="preserve">';
+  txt += spline.toSvgPath(fill, stroke, strokeWeight);
+  // txt += svgStringQuads();
+  txt += '</svg>';
+  let uri = encodeURIComponent(txt);
+  let elt = document.createElement('a');
+  elt.setAttribute('href', 'data:text/plain;charset=utf-8,' + uri);
+  elt.setAttribute('download', fileName);
+  elt.click();
 }
 
 // Event callbacks.
@@ -525,10 +508,8 @@ function onKeyDown(e) {
     // Shift
   } else if (e.keyCode == 67) {
     // C
-    // cameraInverse.rotateY(rotateSpeed * rotateDir);
-    // spline.applyModel(Matrix4x4.identity, modelView, cameraInverse);
-    // spline.applyModel(modelView, Matrix4x4.identity, cameraInverse);
-    // updateVertices(spline, lindetail, raddetail);
+    spline.rotateY(rotateSpeed * rotateDir);
+    updateVertices(spline, lindetail, raddetail);
   } else if (e.keyCode === 68) {
     // D
     adjustForward = CubicBezierSpline.mirrorControlPoint0;
@@ -542,19 +523,15 @@ function onKeyDown(e) {
     adjustBackward = null;
   } else if (e.keyCode === 86) {
     // V
-    // rotateDir = -1;
+    rotateDir = -1;
   } else if (e.keyCode === 88) {
     // X
-    // cameraInverse.rotateX(rotateSpeed * rotateDir);
-    // spline.applyModel(Matrix4x4.identity, modelView, cameraInverse);
-    // spline.applyModel(modelView, Matrix4x4.identity, cameraInverse);
-    // updateVertices(spline, lindetail, raddetail);
+    spline.rotateX(rotateSpeed * rotateDir);
+    updateVertices(spline, lindetail, raddetail);
   } else if (e.keyCode === 90) {
     // Z
-    // cameraInverse.rotateZ(rotateSpeed * rotateDir);
-    // spline.applyModel(Matrix4x4.identity, modelView, cameraInverse);
-    // spline.applyModel(modelView, Matrix4x4.identity, cameraInverse);
-    // updateVertices(spline, lindetail, raddetail);
+    spline.rotateZ(rotateSpeed * rotateDir);
+    updateVertices(spline, lindetail, raddetail);
   } else if (e.keyCode === 97 || e.keyCode === 35) {
     // Numpad 1, End
     spline.scale(downscalar);
@@ -563,6 +540,10 @@ function onKeyDown(e) {
     // Numpad 2, Down arrow
     // Inverted for 2d Canvas.
     spline.translate(Vector.scale(Vector.up, translationSpeed));
+    updateVertices(spline, lindetail, raddetail);
+  } else if (e.keyCode === 99 || e.keyCode === 34) {
+    // Numpad 9, PgUp
+    updateCrossSectionScalars(-fattenSpeed);
     updateVertices(spline, lindetail, raddetail);
   } else if (e.keyCode === 100 || e.keyCode === 37) {
     // Numpad 4, Left arrow
@@ -580,6 +561,10 @@ function onKeyDown(e) {
     // Numpad 8, Up arrow
     // Inverted for 2d Canvas.
     spline.translate(Vector.scale(Vector.down, translationSpeed));
+    updateVertices(spline, lindetail, raddetail);
+  } else if (e.keyCode === 105 || e.keyCode === 33) {
+    // Numpd 9, PgUp
+    updateCrossSectionScalars(fattenSpeed);
     updateVertices(spline, lindetail, raddetail);
   }
 }
@@ -616,10 +601,8 @@ function onKeyUp(e) {
     rotateDir *= -1;
   } else if (e.keyCode === 87) {
     // W
-    spline = randomCurve(lindetail);
+    spline = initCurve(lindetail, -center.x, center.x, -center.y, center.y, -center.x, center.x);
     updateVertices(spline, lindetail, raddetail);
-  } else if (e.keyCode === 89) {
-
   }
 }
 
@@ -642,16 +625,18 @@ function onMouseMove(e) {
 
     let y, z;
     if (currEditMode === EditModes.mouseYtoY) {
-      y = e.clientY;
+      y = e.clientY - center.y;
       z = undefined;
     } else if (currEditMode === EditModes.mouseYtoZ) {
       y = undefined;
-      z = e.clientY;
+      z = e.clientY - center.y;
     }
 
     spline.adjust(curreditcurve, curreditpoint,
-      e.clientX, y, z,
+      e.clientX - center.x, y, z,
       adjustForward, adjustBackward);
+    // spline.adjust(curreditpoint, e.clientX, y, z);
+
     updateVertices(spline, lindetail, raddetail);
   } else if (e.buttons === 4) {
     // Middle
@@ -673,5 +658,7 @@ function onMouseUp(e) {
 
 function onResize(e) {
   cnvs.resize(window.innerWidth, window.innerHeight);
+  cnvs.setFont('bold', '12px', 'sans-serif');
   center.set(cnvs.width * .5, cnvs.height * .5, 0);
+  // cnvs.translate(center);
 }

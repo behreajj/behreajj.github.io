@@ -9,7 +9,27 @@ class DiscreteCubicBezierCurve extends CubicBezierCurve {
 
     super(ap0, cp0, cp1, ap1);
     this._transforms = this.calcTransforms(lod);
+    // this._transforms = this.preCalcTransforms(lod);
   }
+
+  // TODO Exploratory.
+  // Requires testing.
+  // Goal is to get evenly spaced segments
+  // regardless of curve velocity.
+  // preCalcTransforms(lod) {
+  //   let pts = this.calcPoints(lod);
+  //   let tns = this.calcTangents(lod);
+  //   let result = [];
+  //   let lodf = lod - 1.0;
+  //   let st = 0;
+  //   for (let i = 0; i < lod; ++i) {
+  //     st = i / lodf;
+  //     result.push(Matrix4x4.calcOrientation(
+  //       Vector.easeArray(pts, st, Math.lerp),
+  //       Vector.easeArray(tns, st, Math.lerp).norm()));
+  //   }
+  //   return result;
+  // }
 
   // TODO Requires testing.
   adjust(pointIndex,
@@ -17,32 +37,6 @@ class DiscreteCubicBezierCurve extends CubicBezierCurve {
     super.adjust(pointIndex,
       x, y, z);
     this.updateTransforms();
-  }
-
-  // drawTransform2d(ctx, i,
-  //   tanScale = Matrix.defaultDrawScale,
-  //   binormScale = Matrix.defaultDrawScale,
-  //   tanLineWidth = Matrix.defaultLineWidth,
-  //   binormLineWidth = Matrix.defaultLineWidth,
-  //   tanStrokeStyle = Matrix4x4.defaultXAxisColor,
-  //   binormStrokeStyle = Matrix4x4.defaultYAxisColor) {
-  //   this._transforms[i].draw2d(ctx, tanScale, binormScale, tanLineWidth, binormLineWidth, tanStrokeStyle, binormStrokeStyle);
-  // }
-  //
-  // drawTransforms2d(ctx,
-  //   tanScale = Matrix.defaultDrawScale,
-  //   binormScale = Matrix.defaultDrawScale,
-  //   tanLineWidth = Matrix.defaultLineWidth,
-  //   binormLineWidth = Matrix.defaultLineWidth,
-  //   tanStrokeStyle = Matrix4x4.defaultXAxisColor,
-  //   binormStrokeStyle = Matrix4x4.defaultYAxisColor) {
-  //   for (let i = 0, sz = this._transforms.length; i < sz; ++i) {
-  //     this._transforms[i].draw2d(ctx, tanScale, binormScale, tanLineWidth, binormLineWidth, tanStrokeStyle, binormStrokeStyle);
-  //   }
-  // }
-
-  getClass() {
-    return this.constructor.name;
   }
 
   getDetail() {
@@ -71,9 +65,9 @@ class DiscreteCubicBezierCurve extends CubicBezierCurve {
 
   toString(pr = 2) {
     let result = '[';
-    for(let i = 0, sz = this._transforms.length; i < sz; ++i) {
+    for (let i = 0, sz = this._transforms.length; i < sz; ++i) {
       result += this._transforms.toString(pr);
-      if(i < sz - 1) {
+      if (i < sz - 1) {
         result += ', ';
       }
     }
@@ -83,6 +77,7 @@ class DiscreteCubicBezierCurve extends CubicBezierCurve {
 
   updateTransforms(lod = this._transforms.length) {
     this._transforms = CubicBezier.calcTransforms(this._ap0, this._cp0, this._cp1, this._ap1, lod);
+    // this._transforms = this.preCalcTransforms(lod);
   }
 }
 

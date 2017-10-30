@@ -50,19 +50,14 @@ class Vector {
     return Math.acos(Math.clamp(this.dot(v) / this.dist(v), -1, 1));
   }
 
-  // Was used in creating rotation matrices.
-  // applyModel(local, modview, caminv) {
-  //   let mv = modview.copy();
-  //   mv.mult(local);
-  //   return applyLocalModel(mv, caminv);
-  // }
+  applyMatrix(m) {
+    return this.apply2DArray(m._m);
+  }
 
-  // applyLocalModel(mv, caminv) {
-  //   let c = Matrix.dot2DArray1DArray(mv._m, this.to4Array());
-  //   let d = Matrix.dot2DArray1DArray(caminv._m, c);
-  //   this.from4Array(d);
-  //   return this;
-  // }
+  apply2DArray(arr) {
+    this.from4Array(Matrix.dot2DArray1DArray(arr, this.to4Array()));
+    return this;
+  }
 
   copy() {
     return new Vector(this._x, this._y, this._z);
@@ -182,12 +177,83 @@ class Vector {
     return this;
   }
 
+  // TODO Requires testing.
+  rotate(a, axis) {
+    // Safety check 1.
+    // if (v._x === 0 && v._y === 0 && v._z === 0) {
+    //   console.error('Cannot rotate by zero vector.');
+    //   return;
+    // }
+
+    // Safety check 2.
+    // if(Math.abs(v.magSq() - 1) > Number.EPSILON) {
+    //   v.norm();
+    // }
+
+    let c = Math.cos(a);
+    let s = Math.sin(a);
+    let t = 1.0 - c;
+
+    let x = axis._x;
+    let y = axis._y;
+    let z = axis._z;
+
+    let xsq = x * x;
+    let ysq = y * y;
+    let zsq = z * z;
+
+    let txy = t * x * y;
+    let txz = t * x * z;
+    let tyz = t * y * z;
+
+    let sz = s * z;
+    let sy = s * y;
+    let sx = s * x;
+
+    return this.apply2DArray([
+      [t * xsq + c, txy - sz, txz + sy, 0.0],
+      [txy + sz, t * ysq + c, tyz - sx, 0.0],
+      [txz - sy, tyz + sx, t * zsq + c, 0.0],
+      [0.0, 0.0, 0.0, 1.0]
+    ]);
+  }
+
+  rotateX(a) {
+    let cos = Math.cos(a);
+    let sin = Math.sin(a);
+    return this.apply2DArray([
+      [1.0, 0.0, 0.0, 0.0],
+      [0.0, cos, -sin, 0.0],
+      [0.0, sin, cos, 0.0],
+      [0.0, 0.0, 0.0, 1.0]
+    ]);
+  }
+
+  rotateY(a) {
+    let cos = Math.cos(a);
+    let sin = Math.sin(a);
+    return this.apply2DArray([
+      [cos, 0.0, sin, 0.0],
+      [0.0, 1.0, 0.0, 0.0],
+      [-sin, 0.0, cos, 0.0],
+      [0.0, 0.0, 0.0, 1.0]
+    ]);
+  }
+
   rotateZ(a) {
+    let cos = Math.cos(a);
+    let sin = Math.sin(a);
     let xt = this._x;
-    let cs = Math.cos(a);
-    let sn = Math.sin(a);
-    this._x = xt * cs - this._y * sn;
-    this._y = xt * sn + this._y * cs;
+    this._x = xt * cos - this._y * sin;
+    this._y = xt * sin + this._y * cos;
+    return this;
+
+    /* Rotation matrix not necessary.
+     *     [[cos, -sin, 0.0, 0.0],
+     *     [sin, cos, 0.0, 0.0],
+     *     [0.0, 0.0, 1.0, 0.0],
+     *     [0.0, 0.0, 0.0, 1.0]]
+     */
   }
 
   scale(s) {

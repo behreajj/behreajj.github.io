@@ -88,6 +88,10 @@ Math.smootherStep = Math.smootherStep || function(x, y, t) {
   return x + t * t * t * (t * (t * 6.0 - 15.0) + 10.0) * (y - x);
 };
 
+Math.tri = Math.tri || function(phase, freq, min, max) {
+  return phase % freq < freq / 2 ? max : min;
+}
+
 // See https://bost.ocks.org/mike/shuffle/ ,
 // https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
 Array.prototype.shuffle = Array.prototype.shuffle || function() {
