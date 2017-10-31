@@ -25,55 +25,30 @@ class Matrix4x4 extends Matrix {
   }
 
   // determinant() {
-  //   let result = this._m[0][0] *
-  //     ((this._m[1][1] * this._m[2][2] * this._m[3][3] + this._m[1][2] * this._m[2][3] * this._m[3][1] + this._m[1][3] * this._m[2][1] * this._m[3][2]) -
-  //       this._m[1][3] * this._m[2][2] * this._m[3][1] -
-  //       this._m[1][1] * this._m[2][3] * this._m[3][2] -
-  //       this._m[1][2] * this._m[2][1] * this._m[3][3]);
-  //   result -= this._m[0][1] *
-  //     ((this._m[1][0] * this._m[2][2] * this._m[3][3] + this._m[1][2] * this._m[2][3] * this._m[3][0] + this._m[1][3] * this._m[2][0] * this._m[3][2]) -
-  //       this._m[1][3] * this._m[2][2] * this._m[3][0] -
-  //       this._m[1][0] * this._m[2][3] * this._m[3][2] -
-  //       this._m[1][2] * this._m[2][0] * this._m[3][3]);
-  //   result += this._m[0][2] *
-  //     ((this._m[1][0] * this._m[2][1] * this._m[3][3] + this._m[1][1] * this._m[2][3] * this._m[3][0] + this._m[1][3] * this._m[2][0] * this._m[3][1]) -
-  //       this._m[1][3] * this._m[2][1] * this._m[3][0] -
-  //       this._m[1][0] * this._m[2][3] * this._m[3][1] -
-  //       this._m[1][1] * this._m[2][0] * this._m[3][3]);
-  //   result -= this._m[0][3] *
-  //     ((this._m[1][0] * this._m[2][1] * this._m[3][2] + this._m[1][1] * this._m[2][2] * this._m[3][0] + this._m[1][2] * this._m[2][0] * this._m[3][1]) -
-  //       this._m[1][2] * this._m[2][1] * this._m[3][0] -
-  //       this._m[1][0] * this._m[2][2] * this._m[3][1] -
-  //       this._m[1][1] * this._m[2][0] * this._m[3][2]);
-  //   return f;
+
+  // return d00 * d11 - d01 * d10 + d02 * d09 +
+  // d03 * d08 - d04 * d07 + d05 * d06;
+
+  //   var d00 = (this.mat4[0] * this.mat4[5]) - (this.mat4[1] * this.mat4[4]),
+  //   d01 = (this.mat4[0] * this.mat4[6]) - (this.mat4[2] * this.mat4[4]),
+  //   d02 = (this.mat4[0] * this.mat4[7]) - (this.mat4[3] * this.mat4[4]),
+  //   d03 = (this.mat4[1] * this.mat4[6]) - (this.mat4[2] * this.mat4[5]),
+  //   d04 = (this.mat4[1] * this.mat4[7]) - (this.mat4[3] * this.mat4[5]),
+  //   d05 = (this.mat4[2] * this.mat4[7]) - (this.mat4[3] * this.mat4[6]),
+  //   d06 = (this.mat4[8] * this.mat4[13]) - (this.mat4[9] * this.mat4[12]),
+  //   d07 = (this.mat4[8] * this.mat4[14]) - (this.mat4[10] * this.mat4[12]),
+  //   d08 = (this.mat4[8] * this.mat4[15]) - (this.mat4[11] * this.mat4[12]),
+  //   d09 = (this.mat4[9] * this.mat4[14]) - (this.mat4[10] * this.mat4[13]),
+  //   d10 = (this.mat4[9] * this.mat4[15]) - (this.mat4[11] * this.mat4[13]),
+  //   d11 = (this.mat4[10] * this.mat4[15]) - (this.mat4[11] * this.mat4[14]);
   // }
 
   getColAsVector(j) {
-    let arr = this.getColAsArray(j);
-    let v = new Vector(arr[0], arr[1], arr[2]);
-
-    let w = this._m[3][3];
-    if (w !== 0 && w !== 1) {
-      v.x /= w;
-      v.y /= w;
-      v.z /= w;
-    }
-
-    return v;
+    return Vector.from4Array(this.getColAsArray(j));
   }
 
   getRowAsVector(i) {
-    let arr = this.getRowAsArray(i);
-    let v = new Vector(arr[0], arr[1], arr[2]);
-
-    let w = this._m[3][3];
-    if (w !== 0 && w !== 1) {
-      v.x /= w;
-      v.y /= w;
-      v.z /= w;
-    }
-
-    return v;
+    return Vector.from4Array(this.getRowAsArray(i));
   }
 
   reset() {
@@ -150,20 +125,47 @@ Matrix4x4.model = function(v, localSpace,
   modelView = Matrix4x4.identity,
   cameraInverse = Matrix4x4.identity) {
   return Matrix4x4.convertCoord(
-    Matrix.mult2DArrays(modelView._m, localSpace._m), cameraInverse._m,
+    Matrix.mult2DArrays(modelView._m, localSpace._m),
+    cameraInverse._m,
     v.to4Array());
 }
 
 // TODO Needs testing.
-Matrix4x4.screen = function(v, cnvs,
-  modelView = Matrix4x4.identity,
-  projection = Matrix4x4.identity) {
-  let o = Matrix4x4.convertCoord(modelView._m, projection._m, v.to4Array());
-  o.add([Vector.identity]);
-  o.scale(.5);
-  o._x * cnvs.width;
-  o._y * cnvs.height;
-  return o;
+// Matrix4x4.screen = function(v, cnvs,
+//   modelView = Matrix4x4.identity,
+//   projection = Matrix4x4.identity) {
+//   let o = Matrix4x4.convertCoord(modelView._m, projection._m, v.to4Array());
+//   o.add([Vector.identity]);
+//   o.scale(.5);
+//   o._x * cnvs.width;
+//   o._y * cnvs.height;
+//   return o;
+// }
+
+// TODO Needs testing, specifically whether bottom is 0 or height, top 0 or height.
+Matrix4x4.orthographic = function(left = 0, right = window.innerWidth,
+  bottom = 0, top = window.innerHeight,
+  near = window.innerHeight * .086602,
+  far = window.innerHeight * 8.6602) {
+  const lr = 1.0 / (left - right);
+  const bt = 1.0 / (bottom - top);
+  const nf = 1.0 / (near - far);
+  return new Matrix4x4(-2.0 * lr, 0.0, 0.0, 0.0,
+    0.0, -2.0 * bt, 0.0, 0.0,
+    0.0, 0.0, 2.0 * nf, 0.0,
+    (left + right) * lr, (top + bottom) * bt, (far + near) * nf, 1.0);
+}
+
+Matrix4x4.perspective = function(fovy = Math.PI / 3.0,
+  aspect = window.innerWidth / window.innerHeight,
+  near = window.innerHeight * .086602,
+  far = window.innerHeight * 8.6602) {
+  const f = 1.0 / Math.tan(fovy * 0.5);
+  const nf = 1.0 / (near - far);
+  return new Matrix4x4(f / aspect, 0.0, 0.0, 0.0,
+    0.0, f, 0.0, 0.0,
+    0.0, 0.0, (far + near) * nf, -1.0,
+    0.0, 0.0, 2.0 * far * near * nf, 0.0);
 }
 
 Matrix4x4.identity = new Matrix4x4(

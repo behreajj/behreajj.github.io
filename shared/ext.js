@@ -37,15 +37,15 @@ Math.dist = Math.dist || function(x0, x1, y0, y1, z0 = 0, z1 = 0) {
   return Math.sqrt(Math.distsq(x0, x1, y0, y1, z0, z1));
 }
 
-Math.distsq = Math.distsq = function(x0, x1, y0, y1, z0 = 0, z1 = 0) {
-  let depth = z1 - z0;
-  let rise = y1 - y0;
-  let run = x1 - x0;
+Math.distsq = Math.distsq || function(x0, x1, y0, y1, z0 = 0, z1 = 0) {
+  const depth = z1 - z0;
+  const rise = y1 - y0;
+  const run = x1 - x0;
   return rise * rise + run * run + depth * depth;
 }
 
 Math.easeArray = Math.easeArray || function(arr, t, func) {
-  let sz = arr.length;
+  const sz = arr.length;
   if (sz === 0) {
     return undefined;
   } else if (sz === 1 || t <= 0) {
@@ -53,8 +53,8 @@ Math.easeArray = Math.easeArray || function(arr, t, func) {
   } else if (t >= 1) {
     return arr[sz - 1];
   }
-  let sclt = t * (sz - 1);
-  let i = Math.floor(sclt);
+  const sclt = t * (sz - 1);
+  const i = Math.floor(sclt);
   return func(arr[i], arr[i + 1], sclt - i);
 }
 
@@ -92,6 +92,14 @@ Math.tri = Math.tri || function(phase, freq, min, max) {
   return phase % freq < freq / 2 ? max : min;
 }
 
+String.random = String.random || function(len) {
+  let result = '';
+  for (let i = 0; i < len; ++i) {
+    result += String.fromCharCode(parseInt(Math.randomRange(97, 123)));
+  }
+  return result;
+}
+
 // See https://bost.ocks.org/mike/shuffle/ ,
 // https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
 Array.prototype.shuffle = Array.prototype.shuffle || function() {
@@ -110,10 +118,8 @@ Array.prototype.step = function(t) {
   return this[this.stepToIndex(t)];
 }
 
-// Use Math.floor over parseInt. parseInt is intended for parsing
-// strings to integers, and so extremely small numbers expressed
 Array.prototype.stepToIndex = function(t) {
-  let sz = this.length;
+  const sz = this.length;
   if (sz === 0) {
     return undefined;
   } else if (sz === 1 || t <= 0) {
@@ -147,11 +153,3 @@ String.prototype.format = String.prototype.format ||
     }
     return str;
   };
-
-String.random = String.random || function(len) {
-  let result = '';
-  for (let i = 0; i < len; ++i) {
-    result += String.fromCharCode(parseInt(Math.randomRange(97, 123)));
-  }
-  return result;
-}

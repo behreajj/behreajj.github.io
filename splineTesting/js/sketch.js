@@ -1,7 +1,6 @@
 'use strict';
 
 /* TODO MAIN LIST
- * Download a to do
  * Basis matrix of a curve.
  * Look up how 4x4matrix determinants work
  * so you can invert a matrix.
@@ -20,7 +19,7 @@ function pattern(i, ld, iprc, j, rd, jprc) {
 
 const curvesperspline = 7;
 const lindetail = 256;
-const raddetail = 9;
+const raddetail = 15;
 var spline = null;
 var taper = [25, 50, 12.5, 50, 25];
 
@@ -108,7 +107,8 @@ function setup(e) {
 
   spline = initCurve(lindetail, -center.x, center.x, -center.y, center.y, -center.x, center.x);
 
-  initTaper(7, 10, 50);
+
+  initTaper(7, 10, 90);
   initCrossSectionScalars(lindetail, taper, Math.smootherStep);
   initVertices(spline, lindetail, raddetail);
   initIndices(lindetail, raddetail);
@@ -402,14 +402,14 @@ function updateVertices(spl, ld, rd) {
 function objString() {
   let rndname = spline.getClass() + '_' + String.random(5);
   fileName = rndname + '.obj';
-  let result = '# Spline Generator\r\n# ' + new Date() +
-    '\r\n# Verts: ' + (verts.length * verts[0].length) +
-    '\r\n# Faces: ' + faces.length +
-    '\r\no ' + rndname + '\r\n';
+  let result = '# Spline Generator\n# ' + new Date() +
+    '\n# Verts: ' + (verts.length * verts[0].length) +
+    '\n# Faces: ' + faces.length +
+    '\no ' + rndname + '\n';
   result += objStringVerts();
-  // result += '\r\n' + objStringUvs();
-  // result += '\r\n' + objStringNorms();
-  result += '\r\ns off\r\n';
+  // result += '\n' + objStringUvs();
+  // result += '\n' + objStringNorms();
+  result += '\ns off\n';
   result += objStringFaces();
   return result;
 }
@@ -426,7 +426,7 @@ function objStringFaces() {
     }
     result[i] = 'f ' + result[i].join(' ');
   }
-  return result.join('\r\n');
+  return result.join('\n');
 }
 
 // function objStringNorms() {
@@ -441,7 +441,7 @@ function objStringFaces() {
 //         v._z.toFixed(6));
 //     }
 //   }
-//   return result.join('\r\n');
+//   return result.join('\n');
 // }
 
 function objStringVerts() {
@@ -449,14 +449,14 @@ function objStringVerts() {
   let v = null;
   for (let i = 0, sz0 = verts.length, j, sz1; i < sz0; ++i) {
     for (j = 0, sz1 = verts[i].length; j < sz1; ++j) {
-      v = Vector.sub(verts[i][j], center);
+      v = verts[i][j];
       result.push('v ' +
         v._x.toFixed(6) + ' ' +
         v._y.toFixed(6) + ' ' +
         v._z.toFixed(6));
     }
   }
-  return result.join('\r\n');
+  return result.join('\n');
 }
 
 // function objStringUvs() {
@@ -468,7 +468,7 @@ function objStringVerts() {
 //       result.push('vt ' + v._x.toFixed(4) + ' ' + v._y.toFixed(4));
 //     }
 //   }
-//   return result.join('\r\n');
+//   return result.join('\n');
 // }
 
 function objSave() {
@@ -487,7 +487,6 @@ function svgSave(fill = 'transparent',
   fileName = rndname + '.svg';
   let txt = '<?xml version="1.0" encoding="utf-8"?><svg version="1.1" id="' + rndname + '" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 ' + cnvs.width + ' ' + cnvs.height + '" xml:space="preserve">';
   txt += spline.toSvgPath(fill, stroke, strokeWeight);
-  // txt += svgStringQuads();
   txt += '</svg>';
   let uri = encodeURIComponent(txt);
   let elt = document.createElement('a');
@@ -594,7 +593,6 @@ function onKeyUp(e) {
     cnvs.screenCap('splineBrowser' + new Date().getMilliseconds());
   } else if (e.keyCode === 83) {
     // S
-    // updateNorms();
     objSave();
   } else if (e.keyCode === 86) {
     // V
@@ -622,7 +620,6 @@ function onMouseMove(e) {
 
   if (e.buttons === 1) {
     // Left
-
     let y, z;
     if (currEditMode === EditModes.mouseYtoY) {
       y = e.clientY - center.y;
@@ -660,5 +657,5 @@ function onResize(e) {
   cnvs.resize(window.innerWidth, window.innerHeight);
   cnvs.setFont('bold', '12px', 'sans-serif');
   center.set(cnvs.width * .5, cnvs.height * .5, 0);
-  // cnvs.translate(center);
+  cnvs.translate(center);
 }
