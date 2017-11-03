@@ -11,9 +11,6 @@ class CubicBezierCurve extends CubicBezier {
     this._cp0 = cp0.copy();
     this._cp1 = cp1.copy();
     this._ap1 = ap1.copy();
-
-    // For the purposes of rotating the curve.
-    // this._center = this.calcPoint(.5);
   }
 
   // TODO The problem with these is that curve.ap0.set(0, 0, 0)
@@ -51,24 +48,37 @@ class CubicBezierCurve extends CubicBezier {
     this._cp1.set(v.x, v.y, v.z);
   }
 
-  adjust(pointIndex,
-    x, y, z = 0) {
+  // TODO Requires testing.
+  adjust(pointIndex, x, y, z) {
+    let pt = null;
     switch (pointIndex) {
       case CubicBezierCurve.pointLayout.AnchorPoint0:
-        this._ap0.set(x, y, z);
+        pt = this._ap0;
         break;
       case CubicBezierCurve.pointLayout.ControlPoint0:
-        this._cp0.set(x, y, z);
+        pt = this._cp0;
         break;
       case CubicBezierCurve.pointLayout.ControlPoint1:
-        this._cp1.set(x, y, z);
+        pt = this._cp1;
         break;
       case CubicBezierCurve.pointLayout.AnchorPoint1:
-        this._ap1.set(x, y, z);
+        pt = this._ap1;
         break;
       default:
         console.error('Invalid point index. Must be 0 (ap0), 1 (cp0), 2 (cp1) or 3 (ap1).');
+        return false;
     }
+
+    if (x) {
+      pt.x = x;
+    }
+    if (y) {
+      pt.y = y;
+    }
+    if (z) {
+      pt.z = z;
+    }
+    return true;
   }
 
   applyMatrix(m) {
@@ -181,9 +191,41 @@ class CubicBezierCurve extends CubicBezier {
     return this;
   }
 
+  rotate(a, axis) {
+    // No safety checks.
+    // Axis should be non-zero and normalized.
+
+    const c = Math.cos(a);
+    const s = Math.sin(a);
+    const t = 1.0 - c;
+
+    const x = axis._x;
+    const y = axis._y;
+    const z = axis._z;
+
+    const xsq = x * x;
+    const ysq = y * y;
+    const zsq = z * z;
+
+    const txy = t * x * y;
+    const txz = t * x * z;
+    const tyz = t * y * z;
+
+    const sz = s * z;
+    const sy = s * y;
+    const sx = s * x;
+
+    return this.apply2DArray([
+      [t * xsq + c, txy - sz, txz + sy, 0.0],
+      [txy + sz, t * ysq + c, tyz - sx, 0.0],
+      [txz - sy, tyz + sx, t * zsq + c, 0.0],
+      [0.0, 0.0, 0.0, 1.0]
+    ]);
+  }
+
   rotateX(a) {
-    let cos = Math.cos(a);
-    let sin = Math.sin(a);
+    const cos = Math.cos(a);
+    const sin = Math.sin(a);
     return this.apply2DArray([
       [1.0, 0.0, 0.0, 0.0],
       [0.0, cos, -sin, 0.0],
@@ -193,8 +235,8 @@ class CubicBezierCurve extends CubicBezier {
   }
 
   rotateY(a) {
-    let cos = Math.cos(a);
-    let sin = Math.sin(a);
+    const cos = Math.cos(a);
+    const sin = Math.sin(a);
     return this.apply2DArray([
       [cos, 0.0, sin, 0.0],
       [0.0, 1.0, 0.0, 0.0],
@@ -204,8 +246,8 @@ class CubicBezierCurve extends CubicBezier {
   }
 
   rotateZ(a) {
-    let cos = Math.cos(a);
-    let sin = Math.sin(a);
+    const cos = Math.cos(a);
+    const sin = Math.sin(a);
     let pt, xt;
 
     pt = this._ap0;
@@ -269,12 +311,11 @@ class CubicBezierCurve extends CubicBezier {
   }
 
   toString(pr = 2) {
-    return '[{0}, {1}, {2}, {3}]'.format(
-      this._ap0.toString(pr),
-      this._cp0.toString(pr),
-      this._cp1.toString(pr),
-      this._ap1.toString(pr)
-    );
+    return '[' +
+      this._ap0.toString(pr) + ', ' +
+      this._cp0.toString(pr) + ', ' +
+      this._cp1.toString(pr) + ', ' +
+      this._ap1.toString(pr) + ']';
   }
 
   translate(v) {

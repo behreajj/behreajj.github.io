@@ -1,6 +1,10 @@
+'use strict';
+
 class Vector {
   constructor(x = 0, y = 0, z = 0) {
-    this.set(x, y, z);
+    this._x = x;
+    this._y = y;
+    this._z = z;
   }
 
   get x() {
@@ -28,7 +32,7 @@ class Vector {
   }
 
   add(...vs) {
-    let sz = vs.length;
+    const sz = vs.length;
     for (let i = 0; i < sz; ++i) {
       this._x += vs[i].x;
       this._y += vs[i].y;
@@ -37,6 +41,13 @@ class Vector {
     return this;
   }
 
+  /**
+   * Measures the angle between this vector and another.
+   * Neither this nor the vector supplied should be < 0, 0, 0 >.
+   *
+   * @param {Vector} v
+   * @returns {Number} the Euler angle, in radians
+   */
   angleBetween(v) {
     // Safety check.
     // if ((v._x === 0 && v._y === 0 && v._z === 0) ||
@@ -50,50 +61,119 @@ class Vector {
     return Math.acos(Math.clamp(this.dot(v) / this.dist(v), -1, 1));
   }
 
+  /**
+   * Sets this vector to the dot product of itself - as a 1x4 array -
+   * and a 4x4 Matrix.
+   *
+   * @param {Matrix4x4} m
+   * @returns {Vector} this
+   * @chainable
+   */
   applyMatrix(m) {
     return this.apply2DArray(m._m);
   }
 
+  /**
+   * Sets this vector to the dot product of itself - as a 1x4 array -
+   * and a 4x4 array.
+   *
+   * @param {Array} arr a 4x4 array
+   * @returns {Vector} this
+   * @chainable
+   */
   apply2DArray(arr) {
     this.from4Array(Matrix.dot2DArray1DArray(arr, this.to4Array()));
     return this;
   }
 
+  /**
+   * Raises each vector component to the next integer.
+   *
+   * @returns {Vector} this
+   * @chainable
+   */
+  ceil() {
+    this._x = Math.ceil(this._x);
+    this._y = Math.ceil(this._y);
+    this._z = Math.ceil(this._z);
+    return this;
+  }
+
+  /**
+   * Returns a copy of this vector.
+   *
+   * @returns {Vector} a new vector with the same components as this.
+   * @chainable
+   */
   copy() {
     return new Vector(this._x, this._y, this._z);
   }
 
+  /**
+   * @param {Vector} v
+   * @returns {Vector} this
+   * @chainable
+   */
   cross(v) {
-    let ax = this._x;
-    let ay = this._y;
-    let az = this._z;
+    const ax = this._x;
+    const ay = this._y;
+    const az = this._z;
     this._x = ay * b.z - az * b.y;
     this._y = az * b.x - ax * b.z;
     this._z = ax * b.y - ay * b.x;
     return this;
   }
 
+  /**
+   * Calculates straight-line distance with Pythagorean theorem.
+   * Uses Math.sqrt, which is expensive. Where possible, use
+   * distance-squared instead.
+   *
+   * @param {Vector} v
+   * @returns {Number} distance
+   */
   dist(v) {
-    let xdist = v.x - this._x;
-    let ydist = v.y - this._y;
-    let zdist = v.z - this._z;
+    const xdist = v.x - this._x;
+    const ydist = v.y - this._y;
+    const zdist = v.z - this._z;
     return Math.sqrt(xdist * xdist + ydist * ydist + zdist * zdist);
   }
 
+  /**
+   * Calculates straight-line distance with Pythagorean theorem.
+   *
+   * @param {Vector} v
+   * @returns {Number} distance-squared
+   */
   distSq(v) {
-    let xdist = v.x - this._x;
-    let ydist = v.y - this._y;
-    let zdist = v.z - this._z;
+    const xdist = v.x - this._x;
+    const ydist = v.y - this._y;
+    const zdist = v.z - this._z;
     return xdist * xdist + ydist * ydist + zdist * zdist;
   }
 
+  /**
+   * Sums the products of each element of the vector (the dot product).
+   *
+   * @param {Vector} v
+   * @returns {Number} dot product
+   */
   dot(v) {
     return this._x * v.x + this._y * v.y + this._z * v.z;
   }
 
+  /**
+   * Eases the vector toward another by a given percent.
+   *
+   * @param {Vector} v destination
+   * @param {Number} t the step by which to ease, in a range of 0 .. 1.
+   * @param {Function} func the easing function, default Math.lerp
+   * @returns {Vector} this
+   * @chainable
+   */
   ease(v, t, func = Math.lerp) {
     if (t <= 0) {
-      return;
+      return this;
     } else if (t >= 1) {
       this._x = v.x;
       this._y = v.y;
@@ -118,6 +198,26 @@ class Vector {
       this._z.approx(v._z, tolerance);
   }
 
+  /**
+   *
+   * @returns {Vector} this
+   * @chainable
+   */
+  floor() {
+    this._x = Math.floor(this._x);
+    this._y = Math.floor(this._y);
+    this._z = Math.floor(this._z);
+    return this;
+  }
+
+  /**
+   * Sets the vector components to array elements, where
+   * <x, y, z> := [0, 1, 2]
+   *
+   * @param {Array} arr source array, 3 elements long
+   * @returns {Vector} this
+   * @chainable
+   */
   from3Array(arr) {
     this._x = arr[0];
     this._y = arr[1];
@@ -125,6 +225,17 @@ class Vector {
     return this;
   }
 
+  /**
+   * Sets the vector components to array elements, where
+   * the array is assumed to be the product of matrix
+   * operations and arr[3] is the w or identity component
+   * of the vector. Where w is not equal to 1, all other
+   * components are divided by w.
+   *
+   * @param {Array} arr source array, 4 elements long
+   * @returns this
+   * @chainable
+   */
   from4Array(arr) {
     let w = arr[3];
     if (w != 0 && w != 1) {
@@ -139,8 +250,53 @@ class Vector {
     return this;
   }
 
+  /**
+   * Returns the constructor name of the class as a String, "Vector".
+   *
+   * @returns {String} the constructor name
+   */
   getClass() {
     return this.constructor.name;
+  }
+
+  /**
+   *
+   * @returns {Vector} this
+   * @chainable
+   */
+  invert() {
+    this._x = 1.0 / this._x;
+    this._y = 1.0 / this._y;
+    this._z = 1.0 / this._z;
+    return this;
+  }
+
+  /**
+   * If the magitude of the vector exceeds the limit, then the vector
+   * is normalized and rescaled to the limit.
+   *
+   * @param {Number} max limit to the vector's magnitude.
+   * @returns {Vector} this
+   * @chainable
+   */
+  limit(max) {
+    let mag = this._x * this._x + this._y * this._y + this._z * this._z;
+    if (mag > max * max) {
+
+      // Normalize
+      if (mag != 0 && mag != 1) {
+        mag = Math.sqrt(mag);
+        this._x /= mag;
+        this._y /= mag;
+        this._z /= mag;
+      }
+
+      // Scale
+      this._x *= max;
+      this._y *= max;
+      this._z *= max;
+    }
+    return this;
   }
 
   mag() {
@@ -151,9 +307,28 @@ class Vector {
     return this._x * this._x + this._y * this._y + this._z * this._z;
   }
 
+  /**
+   * Switches the sign of each vector component.
+   *
+   * @returns {Vector} this
+   * @chainable
+   */
+  negate() {
+    this._x = -this._x;
+    this._y = -this._y;
+    this._z = -this._z;
+    return this;
+  }
+
+  /**
+   *
+   * @returns {Vector} this
+   * @chainable
+   */
   norm() {
-    let mag = Math.sqrt(this._x * this._x + this._y * this._y + this._z * this._z);
+    let mag = this._x * this._x + this._y * this._y + this._z * this._z;
     if (mag != 0 && mag != 1) {
+      mag = Math.sqrt(mag);
       this._x /= mag;
       this._y /= mag;
       this._z /= mag;
@@ -161,15 +336,30 @@ class Vector {
     return this;
   }
 
+  /**
+   *
+   * @returns {Vector} this
+   * @chainable
+   */
   rescale(s) {
-    this.norm();
+    let mag = this._x * this._x + this._y * this._y + this._z * this._z;
+    if (mag != 0 && mag != 1) {
+      mag = Math.sqrt(mag);
+      this._x /= mag;
+      this._y /= mag;
+      this._z /= mag;
+    }
     this._x *= s;
     this._y *= s;
     this._z *= s;
     return this;
   }
 
-  // RETAIN.
+  /**
+   *
+   * @returns {Vector} this
+   * @chainable
+   */
   reset() {
     this._x = 0.0;
     this._y = 0.0;
@@ -177,10 +367,19 @@ class Vector {
     return this;
   }
 
-  // TODO Requires testing.
+  /**
+   * Rotates this vector by an angle along an axis.
+   * Neither this nor the vector supplied should be < 0, 0, 0 >.
+   * The axis vector should be normalized.
+   *
+   * @param {Number} a the Euler angle, in radians
+   * @param {Vector} axis the normalized, non-zero vector
+   * @returns {Vector} this
+   */
   rotate(a, axis) {
     // Safety check 1.
-    // if (v._x === 0 && v._y === 0 && v._z === 0) {
+    // if ((axis._x === 0 && axis._y === 0 && axis._z === 0) ||
+    //   (this._x === 0 && this._y === 0 && this._z === 0)) {
     //   console.error('Cannot rotate by zero vector.');
     //   return;
     // }
@@ -190,25 +389,25 @@ class Vector {
     //   v.norm();
     // }
 
-    let c = Math.cos(a);
-    let s = Math.sin(a);
-    let t = 1.0 - c;
+    const c = Math.cos(a);
+    const s = Math.sin(a);
+    const t = 1.0 - c;
 
-    let x = axis._x;
-    let y = axis._y;
-    let z = axis._z;
+    const x = axis.x;
+    const y = axis.y;
+    const z = axis.z;
 
-    let xsq = x * x;
-    let ysq = y * y;
-    let zsq = z * z;
+    const xsq = x * x;
+    const ysq = y * y;
+    const zsq = z * z;
 
-    let txy = t * x * y;
-    let txz = t * x * z;
-    let tyz = t * y * z;
+    const txy = t * x * y;
+    const txz = t * x * z;
+    const tyz = t * y * z;
 
-    let sz = s * z;
-    let sy = s * y;
-    let sx = s * x;
+    const sz = s * z;
+    const sy = s * y;
+    const sx = s * x;
 
     return this.apply2DArray([
       [t * xsq + c, txy - sz, txz + sy, 0.0],
@@ -219,8 +418,8 @@ class Vector {
   }
 
   rotateX(a) {
-    let cos = Math.cos(a);
-    let sin = Math.sin(a);
+    const cos = Math.cos(a);
+    const sin = Math.sin(a);
     return this.apply2DArray([
       [1.0, 0.0, 0.0, 0.0],
       [0.0, cos, -sin, 0.0],
@@ -230,8 +429,8 @@ class Vector {
   }
 
   rotateY(a) {
-    let cos = Math.cos(a);
-    let sin = Math.sin(a);
+    const cos = Math.cos(a);
+    const sin = Math.sin(a);
     return this.apply2DArray([
       [cos, 0.0, sin, 0.0],
       [0.0, 1.0, 0.0, 0.0],
@@ -241,9 +440,9 @@ class Vector {
   }
 
   rotateZ(a) {
-    let cos = Math.cos(a);
-    let sin = Math.sin(a);
-    let xt = this._x;
+    const cos = Math.cos(a);
+    const sin = Math.sin(a);
+    const xt = this._x;
     this._x = xt * cos - this._y * sin;
     this._y = xt * sin + this._y * cos;
     return this;
@@ -256,6 +455,25 @@ class Vector {
      */
   }
 
+  /**
+   *
+   * @returns {Vector} this
+   * @chainable
+   */
+  round() {
+    this._x = Math.round(this._x);
+    this._y = Math.round(this._y);
+    this._z = Math.round(this._z);
+    return this;
+  }
+
+  /**
+   * Multiplies the x, y and z component of the vector by a scalar.
+   *
+   * @param {Number} s the scalar value
+   * @returns {Vector} this
+   * @chainable
+   */
   scale(s) {
     this._x *= s;
     this._y *= s;
@@ -263,6 +481,14 @@ class Vector {
     return this;
   }
 
+  /**
+   * Sets the x, y and z components of the vector.
+   *
+   * @param {Number} x
+   * @param {Number} y
+   * @param {Number} z
+   * @returns {Vector} this
+   */
   set(x, y, z = 0) {
     this._x = x;
     this._y = y;
@@ -271,7 +497,7 @@ class Vector {
   }
 
   sub(...vs) {
-    let sz = vs.length;
+    const sz = vs.length;
     for (let i = 0; i < sz; ++i) {
       this._x -= vs[i].x;
       this._y -= vs[i].y;
@@ -280,10 +506,12 @@ class Vector {
     return this;
   }
 
-  to3Array() {
-    return [this._x, this._y, this._z];
-  }
-
+  /**
+   * Returns a one-dimensional array with 4 elements: [x, y, z, w], where w = 1.
+   * Used in matrix-vector operations.
+   *
+   * @returns {Array} [x, y, z, w = 1]
+   */
   to4Array() {
     return [this._x, this._y, this._z, 1];
   }
@@ -296,7 +524,7 @@ class Vector {
 }
 
 Vector.add = function(...vs) {
-  let sz = vs.length;
+  const sz = vs.length;
   if (sz === 0) {
     return undefined;
   } else if (sz === 1) {
@@ -315,11 +543,13 @@ Vector.add = function(...vs) {
 }
 
 Vector.angleBetween = function(a, b) {
-  if (a.equals(Vector.zero) || b.equals(Vector.zero)) {
-    console.error('Could not find angle. Either first term {0} or second {1} is zero.'
-      .format(a.toString(), b.toString()));
-    return 0;
-  }
+  // Safety check.
+  // if ((a._x === 0 && a._y === 0 && a._z === 0) ||
+  //   (b._x === 0 && b._y === 0 && b._z === 0)) {
+  //   console.error('Could not find angle. Either first term {0} or second {1} is zero.'
+  //     .format(a.toString(), b.toString()));
+  //   return 0;
+  // }
   return Math.acos(Math.clamp(Vector.dot(a, b) / Vector.dist(a, b), -1, 1));
 }
 
@@ -334,16 +564,16 @@ Vector.cross = function(a, b) {
 }
 
 Vector.dist = function(a, b) {
-  let xdist = a.x - b.x;
-  let ydist = a.y - b.y;
-  let zdist = a.z - b.z;
+  const xdist = a.x - b.x;
+  const ydist = a.y - b.y;
+  const zdist = a.z - b.z;
   return Math.sqrt(xdist * xdist + ydist * ydist + zdist * zdist);
 }
 
 Vector.distSq = function(a, b) {
-  let xdist = a.x - b.x;
-  let ydist = a.y - b.y;
-  let zdist = a.z - b.z;
+  const xdist = a.x - b.x;
+  const ydist = a.y - b.y;
+  const zdist = a.z - b.z;
   return xdist * xdist + ydist * ydist + zdist * zdist;
 }
 
@@ -363,17 +593,18 @@ Vector.ease = function(a, b, t, func = Math.lerp) {
 }
 
 Vector.easeArray = function(arr, t, func = Math.lerp) {
-  let sz = arr.length;
-  if (sz === 0) {
-    console.error('Length of vector array is 0.');
-    return undefined;
-  } else if (sz === 1 || t <= 0) {
+  const sz = arr.length;
+  // if (sz === 0) {
+  //   console.error('Length of vector array is 0.');
+  //   return undefined;
+  // } else
+  if (sz === 1 || t <= 0) {
     return arr[0].copy();
   } else if (t >= 1) {
     return arr[sz - 1].copy();
   }
-  let sclt = t * (sz - 1);
-  let i = Math.floor(sclt);
+  const sclt = t * (sz - 1);
+  const i = Math.floor(sclt);
   return Vector.ease(arr[i], arr[i + 1], sclt - i, func);
 }
 
@@ -382,11 +613,28 @@ Vector.from3Array = function(arr) {
 }
 
 Vector.from4Array = function(arr) {
-  let w = arr[3];
+  const w = arr[3];
   if (w != 0 && w != 1) {
     return new Vector(arr[0] / w, arr[1] / w, arr[2] / w);
   }
   return new Vector(arr[0], arr[1], arr[2]);
+}
+
+/**
+ * When phi equals PI / 2, 3D and 2D polar coordinates are the same, as sin(phi) = 1.
+ * References: Lengyel, Mathematics for 3D Game Programming, 3d. ed., pps. 516 - 519
+ * Three.js THREE.Vector3.setFromSpherical
+ * @param {Number} theta θ azimuth, longitude, in a range 0 .. 2PI
+ * @param {Number} phi φ inclination, polar angle, latitude, in a range 0 .. PI
+ * @param {Number} radius scalar by which to multiply the vector's components
+ * @param {Vector} offset offset to add to the vector's components
+ * @returns {Vector} a new vector
+ */
+Vector.fromAngle = function(theta, phi = Math.HALF_PI, radius = 1.0, offset = Vector.zero) {
+  const sinphirad = Math.sin(phi) * radius;
+  return new Vector(offset.x + Math.cos(theta) * sinphirad,
+    offset.y + Math.sin(theta) * sinphirad,
+    offset.z + Math.cos(phi) * radius);
 }
 
 Vector.mag = function(v) {
@@ -394,8 +642,8 @@ Vector.mag = function(v) {
 }
 
 Vector.magComparator = function(a, b) {
-  let am = a.magSq();
-  let bm = b.magSq();
+  const am = a.magSq();
+  const bm = b.magSq();
   return am > bm ? 1 : am < bm ? -1 : 0;
 }
 
@@ -403,11 +651,15 @@ Vector.magSq = function(v) {
   return v.x * v.x + v.y * v.y + v.z * v.z;
 }
 
+Vector.negate = function(v) {
+  return new Vector(-v.x, -v.y, -v.z);
+}
+
 Vector.norm = function(v) {
   return v.copy().norm();
 }
 
-Vector.random = function(minx = -1, maxx = 1,
+Vector.randomCartesian = function(minx = -1, maxx = 1,
   miny = -1, maxy = 1,
   minz = -1, maxz = 1) {
   return new Vector(Math.randomRange(minx, maxx),
@@ -415,17 +667,22 @@ Vector.random = function(minx = -1, maxx = 1,
     Math.randomRange(minz, maxz));
 }
 
-Vector.rescale = function(v, s) {
-  return v.copy().norm().scale(s);
+Vector.randomPolar = function(mintheta = 0, maxtheta = Math.TWO_PI,
+  minphi = 0, maxphi = Math.PI,
+  radius = 1.0, offset = Vector.zero) {
+  return Vector.fromAngle(
+    Math.randomRange(mintheta, maxtheta),
+    Math.randomRange(minphi, maxphi),
+    radius, offset);
 }
 
-Vector.rotateX = function(v, a) {
-  let cos = Math.cos(a);
-  let sin = Math.sin(a);
-  return new Vector(
-    v.x * cos - v.y * sin,
-    v.x * sin + v.y * cos,
-    v.z);
+/**
+ * Alias
+ */
+Vector.random = Vector.randomCartesian;
+
+Vector.rescale = function(v, s) {
+  return v.copy().norm().scale(s);
 }
 
 Vector.scale = function(v, s) {
@@ -438,7 +695,7 @@ Vector.sort1DArray = function(arr, comparator = Vector.defaultComparator) {
 }
 
 Vector.sub = function(a, ...b) {
-  let sz = b.length;
+  const sz = b.length;
   if (sz === 0) {
     return a.copy();
   }
@@ -451,9 +708,13 @@ Vector.sub = function(a, ...b) {
   return c;
 }
 
-Vector.toArray = function(v) {
-  return [v.x, v.y, v.z];
+Vector.to4Array = function(v) {
+  return [v.x, v.y, v.z, 1];
 }
+
+/**
+ * Sorting comparators.
+ */
 
 Vector.xComparator = function(a, b) {
   return a.x > b.x ? 1 : a.x < b.x ? -1 : 0;

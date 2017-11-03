@@ -25,28 +25,6 @@ class DiscreteCubicBezierLoop extends CubicBezierLoop {
     this.updateTransforms();
   }
 
-  // drawTransform2d(ctx, i,
-  //   tanScale = Matrix.defaultDrawScale,
-  //   normScale = Matrix.defaultDrawScale,
-  //   tanLineWidth = Matrix.defaultLineWidth,
-  //   normLineWidth = Matrix.defaultLineWidth,
-  //   tanStrokeStyle = Matrix4x4.defaultXAxisColor,
-  //   normStrokeStyle = Matrix4x4.defaultYAxisColor) {
-  //   this._transforms[i].draw2d(ctx, tanScale, normScale, tanLineWidth, normLineWidth, tanStrokeStyle, normStrokeStyle);
-  // }
-  //
-  // drawTransforms2d(ctx,
-  //   tanScale = Matrix.defaultDrawScale,
-  //   normScale = Matrix.defaultDrawScale,
-  //   tanLineWidth = Matrix.defaultLineWidth,
-  //   normLineWidth = Matrix.defaultLineWidth,
-  //   tanStrokeStyle = Matrix4x4.defaultXAxisColor,
-  //   normStrokeStyle = Matrix4x4.defaultYAxisColor) {
-  //   for (let i = 0, sz = this._transforms.length; i < sz; ++i) {
-  //     this._transforms[i].draw2d(ctx, tanScale, normScale, tanLineWidth, normLineWidth, tanStrokeStyle, normStrokeStyle);
-  //   }
-  // }
-
   getClass() {
     return this.constructor.name;
   }
@@ -75,6 +53,37 @@ class DiscreteCubicBezierLoop extends CubicBezierLoop {
     return this._transforms[i].copy();
   }
 
+  /** @override */
+  rotate(a, axis) {
+    super.rotate(a, axis);
+    this.updateTransforms(this._transforms.length);
+  }
+
+  /** @override */
+  rotateX(a) {
+    super.rotateX(a);
+    this.updateTransforms(this._transforms.length);
+  }
+
+  /** @override */
+  rotateY(a) {
+    super.rotateY(a);
+    this.updateTransforms(this._transforms.length);
+  }
+
+  /** @override */
+  rotateZ(a) {
+    super.rotateZ(a);
+    this.updateTransforms(this._transforms.length);
+  }
+
+  /** @override */
+  scale(s) {
+    super.scale(s);
+    this.updateTransforms(this._transforms.length);
+  }
+
+  /** @override */
   toString(pr = 2) {
     let result = '[';
     for (let i = 0, sz = this._transforms.length; i < sz - 1; ++i) {
@@ -86,6 +95,12 @@ class DiscreteCubicBezierLoop extends CubicBezierLoop {
     }
     result += ']';
     return result;
+  }
+
+  /** @override */
+  translate(v) {
+    super.translate(v);
+    this.updateTransforms(this._transforms.length);
   }
 
   updateTransforms(lod = this._transforms.length) {

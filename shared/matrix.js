@@ -9,12 +9,8 @@ class Matrix {
     }
   }
 
-  add(n) {
-    for (let i = 0, sz = this._m.length, j; i < sz; ++i) {
-      for (j = 0; j < sz; ++j) {
-        this._m[i][j] += n._m[i][j];
-      }
-    }
+  applyMatrix(n) {
+    this._m = Matrix.mult2DArrays(this._m, n._m);
   }
 
   copy() {
@@ -33,7 +29,7 @@ class Matrix {
       return false;
     }
 
-    let sz = this._m.length;
+    const sz = this._m.length;
     if (sz !== m._m.length) {
       return false;
     }
@@ -71,7 +67,8 @@ class Matrix {
   }
 
   scale(v) {
-    for (let i = 0, sz = this._m.length, j; i < sz; ++i) {
+    const sz = this._m.length;
+    for (let i = 0, j; i < sz; ++i) {
       for (j = 0; j < sz; ++j) {
         this._m[i][j] *= v;
       }
@@ -84,7 +81,7 @@ class Matrix {
   }
 
   setCol(j, ...vs) {
-    let sz = this._m.length;
+    const sz = this._m.length;
     if (vs.length === sz) {
       for (let i = 0; i < sz; ++i) {
         this._m[i][j] = vs[i];
@@ -96,7 +93,7 @@ class Matrix {
   }
 
   setRow(i, ...vs) {
-    let sz = this._m[i].length;
+    const sz = this._m[i].length;
     if (vs.length === sz) {
       this._m[i] = vs;
     } else {
@@ -128,7 +125,7 @@ class Matrix {
 }
 
 Matrix.add2DArrays = function(m, n) {
-  let sz = m.length;
+  const sz = m.length;
   let result = [];
   for (let i = 0, j; i < sz; ++i) {
     result.push([]);
@@ -140,8 +137,9 @@ Matrix.add2DArrays = function(m, n) {
 }
 
 Matrix.convert2DArrayTo1DArray = function(arr) {
+  const sz = arr.length;
   let result = [];
-  for (let i = 0, sz = arr.length, j; i < sz; ++i) {
+  for (let i = 0, j; i < sz; ++i) {
     for (j = 0; j < sz; ++j) {
       result.push(arr[i][j]);
     }
@@ -159,8 +157,9 @@ Matrix.convert1DArrayTo2DArray = function(arr) {
   //     sz + '.';
   // }
 
+  const sz = arr.length;
   let result = [];
-  for (let k = 0, i = 0, sz = arr.length, j; i < sz; ++i) {
+  for (let k = 0, i = 0, j; i < sz; ++i) {
     result.push([]);
     for (j = 0; j < sz; ++j, ++k) {
       result[i].push(arr[k]);
@@ -171,7 +170,8 @@ Matrix.convert1DArrayTo2DArray = function(arr) {
 
 Matrix.copy1DArray = function(arr) {
   let result = [];
-  for (let i = 0, sz = arr.length; i < sz; ++i) {
+  const sz = arr.length;
+  for (let i = 0; i < sz; ++i) {
     result.push(0.0);
     result[i] += arr[i];
   }
@@ -193,16 +193,18 @@ Matrix.copy2DArray = function(arr) {
 Matrix.dot1DArrays = function(a, b) {
   // Safety check a.length === b.length.
   let sum = 0;
-  for (let i = 0, sz = a.length; i < sz; ++i) {
+  const sz = a.length;
+  for (let i = 0; i < sz; ++i) {
     sum += a[i] * b[i];
   }
   return sum;
 }
 
 Matrix.dot2DArray1DArray = function(arr2d, arr1d) {
-  let result = [];
   // Safety check: a.length === b.length;
-  for (let i = 0, sz = arr2d.length, j; i < sz; ++i) {
+  let result = [];
+  const sz = arr2d.length;
+  for (let i = 0, j; i < sz; ++i) {
     result.push(0);
     for (j = 0; j < sz; ++j) {
       result[i] += arr2d[i][j] * arr1d[j];
@@ -213,7 +215,8 @@ Matrix.dot2DArray1DArray = function(arr2d, arr1d) {
 
 Matrix.getColFrom2DArray = function(arr, j) {
   let result = [];
-  for (let i = 0, h = arr.length; i < h; ++i) {
+  const h = arr.length;
+  for (let i = 0; i < h; ++i) {
     result.push(arr[i][j]);
   }
   return result;
@@ -225,7 +228,8 @@ Matrix.is1DArraySquare = function(arr) {
 
 Matrix.mult2DArrays = function(m, n) {
   let result = [];
-  for (let i = 0, sz = m.length, j; i < sz; ++i) {
+  const sz = m.length;
+  for (let i = 0, j; i < sz; ++i) {
     result.push([]);
     for (j = 0; j < sz; ++j) {
       result[i].push(Matrix.dot1DArrays(m[j], n[i]));
@@ -236,7 +240,9 @@ Matrix.mult2DArrays = function(m, n) {
 
 Matrix.toString2DArray = function(arr, pr = Matrix.defaultToStringFixed) {
   let result = '[';
-  for (let i = 0, sz = arr.length, szc = sz - 1, j; i < sz; ++i) {
+  const sz = arr.length;
+  const szc = sz - 1;
+  for (let i = 0, j; i < sz; ++i) {
     result += '['
     for (j = 0; j < sz; ++j) {
       result += arr[i][j].toFixed(pr);
@@ -255,7 +261,8 @@ Matrix.toString2DArray = function(arr, pr = Matrix.defaultToStringFixed) {
 
 Matrix.transpose2DArray = function(arr) {
   let result = [];
-  for (let i = 0, sz = arr.length, j; i < sz; ++i) {
+  const sz = arr.length;
+  for (let i = 0, j; i < sz; ++i) {
     result.push([]);
     for (j = 0; j < sz; ++j) {
       result[i].push(arr[j][i]);

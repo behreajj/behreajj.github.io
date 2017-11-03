@@ -26,6 +26,10 @@ class DiscreteCubicBezierSpline extends CubicBezierSpline {
   }
 
   //TODO How to fix extreme torsion on negative curves?
+  // Would taking a page from camera, in which up is a parameters
+  // passed to Matrix.calcOrientation, and is recalculated after
+  // forward and right are found?
+    // PVector.cross(forward, right, up);
   // easeAxis(j, func = Vector.lerp) {
   //   let sz = this._transforms.length;
   //   let szf = sz - 1;
@@ -38,28 +42,6 @@ class DiscreteCubicBezierSpline extends CubicBezierSpline {
   //     this._transforms[i]._m[0][j] = v.x;
   //     this._transforms[i]._m[1][j] = v.y;
   //     this._transforms[i]._m[2][j] = v.z;
-  //   }
-  // }
-
-  // drawTransform2d(ctx, i,
-  //   tanScale = Matrix.defaultDrawScale,
-  //   normScale = Matrix.defaultDrawScale,
-  //   tanLineWidth = Matrix.defaultLineWidth,
-  //   normLineWidth = Matrix.defaultLineWidth,
-  //   tanStrokeStyle = Matrix4x4.defaultXAxisColor,
-  //   normStrokeStyle = Matrix4x4.defaultYAxisColor) {
-  //   this._transforms[i].draw2d(ctx, tanScale, normScale, tanLineWidth, normLineWidth, tanStrokeStyle, normStrokeStyle);
-  // }
-  //
-  // drawTransforms2d(ctx,
-  //   tanScale = Matrix.defaultDrawScale,
-  //   normScale = Matrix.defaultDrawScale,
-  //   tanLineWidth = Matrix.defaultLineWidth,
-  //   normLineWidth = Matrix.defaultLineWidth,
-  //   tanStrokeStyle = Matrix4x4.defaultXAxisColor,
-  //   normStrokeStyle = Matrix4x4.defaultYAxisColor) {
-  //   for (let i = 0, sz = this._transforms.length; i < sz; ++i) {
-  //     this._transforms[i].draw2d(ctx, tanScale, normScale, tanLineWidth, normLineWidth, tanStrokeStyle, normStrokeStyle);
   //   }
   // }
 
@@ -91,6 +73,36 @@ class DiscreteCubicBezierSpline extends CubicBezierSpline {
     return this._transforms[i].copy();
   }
 
+  /** @override */
+  rotate(a, axis) {
+    super.rotate(a, axis);
+    this.updateTransforms(this._transforms.length);
+  }
+
+  /** @override */
+  rotateX(a) {
+    super.rotateX(a);
+    this.updateTransforms(this._transforms.length);
+  }
+
+  /** @override */
+  rotateY(a) {
+    super.rotateY(a);
+    this.updateTransforms(this._transforms.length);
+  }
+
+  /** @override */
+  rotateZ(a) {
+    super.rotateZ(a);
+    this.updateTransforms(this._transforms.length);
+  }
+
+  /** @override */
+  scale(s) {
+    super.scale(s);
+    this.updateTransforms(this._transforms.length);
+  }
+
   toString(pr = 2) {
     let result = '[';
     for (let i = 0, sz = this._transforms.length; i < sz; ++i) {
@@ -103,18 +115,9 @@ class DiscreteCubicBezierSpline extends CubicBezierSpline {
     return result;
   }
 
-  rotateZ(a) {
-    super.rotateZ(a);
-    this.updateTransforms(this._transforms.length);
-  }
-
-  scale(s) {
-    super.scale(s);
-    this.updateTransforms(this._transforms.length);
-  }
-
+  /** @override */
   translate(v) {
-    super.scale(v);
+    super.translate(v);
     this.updateTransforms(this._transforms.length);
   }
 
@@ -125,7 +128,7 @@ class DiscreteCubicBezierSpline extends CubicBezierSpline {
 
 DiscreteCubicBezierSpline.defaultLevelOfDetail = 16;
 
-DiscreteCubicBezierCurve.random = function(
+DiscreteCubicBezierSpline.random = function(
   lod = DiscreteCubicBezierSpline.defaultLevelOfDetail,
   minx = -1, maxx = 1,
   miny = -1, maxy = 1,

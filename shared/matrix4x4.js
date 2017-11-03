@@ -24,24 +24,85 @@ class Matrix4x4 extends Matrix {
     return n;
   }
 
-  // determinant() {
+  // TODO Needs testing.
+  // From p5.Matrix.
+  determinant() {
+    const d00 = (this._m[0][0] * this._m[1][1]) - (this._m[0][1] * this._m[1][0]),
+      d01 = (this._m[0][0] * this._m[1][2]) - (this._m[0][2] * this._m[1][0]),
+      d02 = (this._m[0][0] * this._m[1][3]) - (this._m[0][3] * this._m[1][0]),
+      d03 = (this._m[0][1] * this._m[1][2]) - (this._m[0][2] * this._m[1][1]),
+      d04 = (this._m[0][1] * this._m[1][3]) - (this._m[0][3] * this._m[1][1]),
+      d05 = (this._m[0][2] * this._m[1][3]) - (this._m[0][3] * this._m[1][2]),
+      d06 = (this._m[2][0] * this._m[3][1]) - (this._m[2][1] * this._m[3][0]),
+      d07 = (this._m[2][0] * this._m[3][2]) - (this._m[2][2] * this._m[3][0]),
+      d08 = (this._m[2][0] * this._m[3][3]) - (this._m[2][3] * this._m[3][0]),
+      d09 = (this._m[2][1] * this._m[3][2]) - (this._m[2][2] * this._m[3][1]),
+      d10 = (this._m[2][1] * this._m[3][3]) - (this._m[2][3] * this._m[3][1]),
+      d11 = (this._m[2][2] * this._m[3][3]) - (this._m[2][3] * this._m[3][2]);
 
-  // return d00 * d11 - d01 * d10 + d02 * d09 +
-  // d03 * d08 - d04 * d07 + d05 * d06;
+    return d00 * d11 - d01 * d10 + d02 * d09 +
+      d03 * d08 - d04 * d07 + d05 * d06;
+  }
 
-  //   var d00 = (this.mat4[0] * this.mat4[5]) - (this.mat4[1] * this.mat4[4]),
-  //   d01 = (this.mat4[0] * this.mat4[6]) - (this.mat4[2] * this.mat4[4]),
-  //   d02 = (this.mat4[0] * this.mat4[7]) - (this.mat4[3] * this.mat4[4]),
-  //   d03 = (this.mat4[1] * this.mat4[6]) - (this.mat4[2] * this.mat4[5]),
-  //   d04 = (this.mat4[1] * this.mat4[7]) - (this.mat4[3] * this.mat4[5]),
-  //   d05 = (this.mat4[2] * this.mat4[7]) - (this.mat4[3] * this.mat4[6]),
-  //   d06 = (this.mat4[8] * this.mat4[13]) - (this.mat4[9] * this.mat4[12]),
-  //   d07 = (this.mat4[8] * this.mat4[14]) - (this.mat4[10] * this.mat4[12]),
-  //   d08 = (this.mat4[8] * this.mat4[15]) - (this.mat4[11] * this.mat4[12]),
-  //   d09 = (this.mat4[9] * this.mat4[14]) - (this.mat4[10] * this.mat4[13]),
-  //   d10 = (this.mat4[9] * this.mat4[15]) - (this.mat4[11] * this.mat4[13]),
-  //   d11 = (this.mat4[10] * this.mat4[15]) - (this.mat4[11] * this.mat4[14]);
-  // }
+  // From p5.Matrix.
+  invert() {
+    const a00 = this._m[0][0],
+      a01 = this._m[0][1],
+      a02 = this._m[0][2],
+      a03 = this._m[0][3],
+      a10 = this._m[1][0],
+      a11 = this._m[1][1],
+      a12 = this._m[1][2],
+      a13 = this._m[1][3],
+      a20 = this._m[2][0],
+      a21 = this._m[2][1],
+      a22 = this._m[2][2],
+      a23 = this._m[2][3],
+      a30 = this._m[3][0],
+      a31 = this._m[3][1],
+      a32 = this._m[3][2],
+      a33 = this._m[3][3],
+
+      b00 = a00 * a11 - a01 * a10,
+      b01 = a00 * a12 - a02 * a10,
+      b02 = a00 * a13 - a03 * a10,
+      b03 = a01 * a12 - a02 * a11,
+      b04 = a01 * a13 - a03 * a11,
+      b05 = a02 * a13 - a03 * a12,
+      b06 = a20 * a31 - a21 * a30,
+      b07 = a20 * a32 - a22 * a30,
+      b08 = a20 * a33 - a23 * a30,
+      b09 = a21 * a32 - a22 * a31,
+      b10 = a21 * a33 - a23 * a31,
+      b11 = a22 * a33 - a23 * a32;
+
+    let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 -
+      b04 * b07 + b05 * b06;
+
+    if (!det) {
+      return null;
+    }
+    det = 1.0 / det;
+
+    this._m[0][0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
+    this._m[0][1] = (a02 * b10 - a01 * b11 - a03 * b09) * det;
+    this._m[0][2] = (a31 * b05 - a32 * b04 + a33 * b03) * det;
+    this._m[0][3] = (a22 * b04 - a21 * b05 - a23 * b03) * det;
+    this._m[1][0] = (a12 * b08 - a10 * b11 - a13 * b07) * det;
+    this._m[1][1] = (a00 * b11 - a02 * b08 + a03 * b07) * det;
+    this._m[1][2] = (a32 * b02 - a30 * b05 - a33 * b01) * det;
+    this._m[1][3] = (a20 * b05 - a22 * b02 + a23 * b01) * det;
+    this._m[2][0] = (a10 * b10 - a11 * b08 + a13 * b06) * det;
+    this._m[2][1] = (a01 * b08 - a00 * b10 - a03 * b06) * det;
+    this._m[2][2] = (a30 * b04 - a31 * b02 + a33 * b00) * det;
+    this._m[2][3] = (a21 * b02 - a20 * b04 - a23 * b00) * det;
+    this._m[3][0] = (a11 * b07 - a10 * b09 - a12 * b06) * det;
+    this._m[3][1] = (a00 * b09 - a01 * b07 + a02 * b06) * det;
+    this._m[3][2] = (a31 * b01 - a30 * b03 - a32 * b00) * det;
+    this._m[3][3] = (a20 * b03 - a21 * b01 + a22 * b00) * det;
+
+    return this;
+  }
 
   getColAsVector(j) {
     return Vector.from4Array(this.getColAsArray(j));
@@ -92,9 +153,9 @@ class Matrix4x4 extends Matrix {
   }
 
   translate(v) {
-    let tx = v.x;
-    let ty = v.y;
-    let tz = v.z;
+    const tx = v.x;
+    const ty = v.y;
+    const tz = v.z;
     for (let i = 0; i < 4; ++i) {
       this._m[i][3] +=
         tx * this._m[i][0] +
@@ -105,9 +166,13 @@ class Matrix4x4 extends Matrix {
   }
 }
 
+Matrix4x4.lookAt = function(point, target) {
+  return Matrix4x4.calcOrientation(point, Vector.sub(point, target).norm());
+}
+
 Matrix4x4.calcOrientation = function(point, tangent) {
-  let yaxis = Vector.cross(point, tangent).norm();
-  let xaxis = Vector.cross(yaxis, tangent).norm();
+  const yaxis = Vector.cross(point, tangent).norm();
+  const xaxis = Vector.cross(yaxis, tangent).norm();
   return new Matrix4x4(xaxis.x, yaxis.x, tangent.x, point.x,
     xaxis.y, yaxis.y, tangent.y, point.y,
     xaxis.z, yaxis.z, tangent.z, point.z,
@@ -121,9 +186,7 @@ Matrix4x4.convertCoord = function(m, n, arr1d) {
   );
 }
 
-Matrix4x4.model = function(v, localSpace,
-  modelView = Matrix4x4.identity,
-  cameraInverse = Matrix4x4.identity) {
+Matrix4x4.model = function(v, localSpace, modelView, cameraInverse) {
   return Matrix4x4.convertCoord(
     Matrix.mult2DArrays(modelView._m, localSpace._m),
     cameraInverse._m,
@@ -131,41 +194,66 @@ Matrix4x4.model = function(v, localSpace,
 }
 
 // TODO Needs testing.
-// Matrix4x4.screen = function(v, cnvs,
-//   modelView = Matrix4x4.identity,
-//   projection = Matrix4x4.identity) {
-//   let o = Matrix4x4.convertCoord(modelView._m, projection._m, v.to4Array());
-//   o.add([Vector.identity]);
-//   o.scale(.5);
-//   o._x * cnvs.width;
-//   o._y * cnvs.height;
-//   return o;
-// }
-
-// TODO Needs testing, specifically whether bottom is 0 or height, top 0 or height.
-Matrix4x4.orthographic = function(left = 0, right = window.innerWidth,
-  bottom = 0, top = window.innerHeight,
-  near = window.innerHeight * .086602,
-  far = window.innerHeight * 8.6602) {
-  const lr = 1.0 / (left - right);
-  const bt = 1.0 / (bottom - top);
-  const nf = 1.0 / (near - far);
-  return new Matrix4x4(-2.0 * lr, 0.0, 0.0, 0.0,
-    0.0, -2.0 * bt, 0.0, 0.0,
-    0.0, 0.0, 2.0 * nf, 0.0,
-    (left + right) * lr, (top + bottom) * bt, (far + near) * nf, 1.0);
+Matrix4x4.screen = function(v, cnvs, projection, modelView) {
+  let o = Matrix4x4.convertCoord(modelView._m, projection._m, v.to4Array());
+  // o.add(Vector.one);
+  // o.scale(0.5);
+  o._x * cnvs.width;
+  o._y * cnvs.height;
+  return o;
 }
 
-Matrix4x4.perspective = function(fovy = Math.PI / 3.0,
-  aspect = window.innerWidth / window.innerHeight,
-  near = window.innerHeight * .086602,
+Matrix4x4.camera = function(position, focus = Vector.zero, up = Vector.up) {
+  const forward = Vector.sub(position, focus).norm();
+  // Should up be calculated or supplied?
+  const right = Vector.cross(up, forward).norm();
+  const up2 = Vector.cross(forward, right).norm();
+  let result = new Matrix4x4(
+    right.x, right.y, right.z, 0,
+    up2.x, up2.y, up2.z, 0,
+    forward.x, forward.y, forward.z, 0,
+    0.0, 0.0, 0.0, 1.0);
+  result.translate(Vector.negate(position));
+  return result;
+}
+
+// TODO Needs testing.
+Matrix4x4.frustum = function(left, right, bottom, top,
+  near = window.innerHeight * .088602,
   far = window.innerHeight * 8.6602) {
-  const f = 1.0 / Math.tan(fovy * 0.5);
-  const nf = 1.0 / (near - far);
-  return new Matrix4x4(f / aspect, 0.0, 0.0, 0.0,
-    0.0, f, 0.0, 0.0,
-    0.0, 0.0, (far + near) * nf, -1.0,
-    0.0, 0.0, 2.0 * far * near * nf, 0.0);
+  const n2 = 2 * near;
+  const w = right - left;
+  const h = top - bottom;
+  const d = far - near;
+  return new Matrix4x4(
+    n2 / w, 0.0, (right + left) / w, 0.0,
+    0.0, n2 / h, (top + bottom) / h, 0.0,
+    0.0, 0.0, -(far + near) / d, -(n2 * far) / d,
+    0.0, 0.0, 1.0, 0.0);
+}
+
+// TODO Needs testing, specifically whether bottom is 0 or height, top 0 or height.
+Matrix4x4.orthographic = function(left, right, bottom, top,
+  near = window.innerHeight * .088602,
+  far = window.innerHeight * 8.6602) {
+  const w = right - left;
+  const h = top - bottom;
+  const d = far - near;
+  return new Matrix4x4(
+    2.0 / w, 0.0, 0.0, -(right + left) / w,
+    0.0, 2.0 / h, 0.0, -(top + bottom) / h,
+    0.0, 0.0, -2.0 / d, -(far + near) / d,
+    0.0, 0.0, 0.0, 1.0);
+}
+
+// TODO Needs testing, specifically appropriate near and far.
+Matrix4x4.perspective = function(fov = 1.0471975511965976,
+  aspect = window.innerWidth / window.innerHeight,
+  near = window.innerHeight * .088602,
+  far = window.innerHeight * 8.6602) {
+  const ymax = near * Math.tan(fov * 0.5);
+  const ymaxaspect = ymax * aspect;
+  return Matrix4x4.frustum(-ymaxaspect, ymaxaspect, -ymax, ymax, near, far);
 }
 
 Matrix4x4.identity = new Matrix4x4(
@@ -173,3 +261,13 @@ Matrix4x4.identity = new Matrix4x4(
   0.0, 1.0, 0.0, 0.0,
   0.0, 0.0, 1.0, 0.0,
   0.0, 0.0, 0.0, 1.0);
+
+
+// TODO Would it be more efficient to cache
+// a rotation matrix and then change it when
+// a rotation is requested?
+// Matrix4x4.rotation = new Matrix4x4(
+//   1.0, 0.0, 0.0, 0.0,
+//   0.0, 1.0, 0.0, 0.0,
+//   0.0, 0.0, 1.0, 0.0,
+//   0.0, 0.0, 0.0, 1.0);

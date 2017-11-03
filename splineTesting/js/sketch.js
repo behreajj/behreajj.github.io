@@ -13,13 +13,16 @@
 function pattern(i, ld, iprc, j, rd, jprc) {
   let theta = Math.TWO_PI * jprc;
   // let scl = j % 2 === 0 ? 1 : .5;
-  let scl = Math.tri(j, 3, 0.1, 1);
-  return new Vector(Math.cos(theta) * scl, Math.sin(theta) * scl, 0);
+  // let scl = Math.tri(j, 3, 0.1, 1);
+  // return new Vector(Math.cos(theta) * scl, Math.sin(theta) * scl, 0);
+
+  // Simple radial form.
+  return new Vector(Math.cos(theta), Math.sin(theta), 0);
 }
 
-const curvesperspline = 7;
+const curvesperspline = 5;
 const lindetail = 256;
-const raddetail = 15;
+const raddetail = 4;
 var spline = null;
 var taper = [25, 50, 12.5, 50, 25];
 
@@ -35,6 +38,7 @@ const controls = [
   ['Q', 'Screen capture (.png)'],
   ['S', 'Save mesh (.obj)'],
   ['W', 'New random curve'],
+  ['V', 'Flip rotate direction'],
   ['X', 'Rotate x'],
   ['C', 'Rotate y'],
   ['Z', 'Rotate z'],
@@ -60,12 +64,14 @@ const MeshModes = {
 }
 const rotateSpeed = .025;
 const bkgcolor = 'rgb(25, 25, 25)';
-
-var framecount = 0;
-var mouse = new Vector();
-var center = new Vector();
+const translationSpeed = 2;
+const upscalar = 1.1;
+const downscalar = 1 / upscalar;
+const fattenSpeed = 1;
 
 var cnvs = null;
+var framecount = 0;
+var center = new Vector();
 
 // Spline editing.
 var curreditcurve = 0;
@@ -75,13 +81,8 @@ var adjustForward = CubicBezierSpline.alignControlPoint0;
 var adjustBackward = CubicBezierSpline.alignControlPoint1;
 var currEditMode = EditModes.mouseYtoY;
 var showControlNet = true;
-var showMesh = MeshModes.faces;
+var showMesh = MeshModes.vertices;
 var rotateDir = 1;
-const translationSpeed = 2;
-const upscalar = 1.1;
-const downscalar = 1 / upscalar;
-const fattenSpeed = 1;
-
 
 // Mesh
 var crossSectionScalars = [];
@@ -98,17 +99,17 @@ var fileName = 'blob.obj';
 window.onload = setup
 
 function setup(e) {
+
   cnvs = new TwoDCnvs(window.innerWidth, window.innerHeight);
   cnvs.append(document.body);
-  cnvs.setFont('bold', '12px', 'sans-serif');
+  cnvs.setFont('bold', 1, 'em', 'sans-serif');
 
   center.set(cnvs.width * .5, cnvs.height * .5, 0);
   cnvs.translate(center);
 
-  spline = initCurve(lindetail, -center.x, center.x, -center.y, center.y, -center.x, center.x);
+  spline = initCurve(lindetail);
 
-
-  initTaper(7, 10, 90);
+  initTaper(7, 10, 80);
   initCrossSectionScalars(lindetail, taper, Math.smootherStep);
   initVertices(spline, lindetail, raddetail);
   initIndices(lindetail, raddetail);
@@ -133,7 +134,6 @@ function setup(e) {
 
 function draw(e) {
   framecount++;
-
   cnvs.background(bkgcolor, center);
 
   switch (showMesh) {
@@ -144,7 +144,7 @@ function draw(e) {
       drawQuads2dStroke(cnvs.ctx, 1, 1, 1);
       break;
     case MeshModes.vertices:
-      drawVertices(cnvs.ctx, 3);
+      drawVertices(cnvs.ctx, 2);
       break;
     case MeshModes.bezier2d:
       spline.draw2d(cnvs.ctx);
@@ -161,8 +161,9 @@ function draw(e) {
   window.requestAnimationFrame(draw);
 }
 
-function drawQuad2dFill(ctx, v00, v10, v11, v01, clr = '#fff') {
-  ctx.fillStyle = clr;
+// This could be faster if only one color is used, but that makes it
+// more difficult to see segments of the curve.
+function drawQuad2dFill(ctx, v00, v10, v11, v01) {
   ctx.beginPath();
   ctx.moveTo(v00.x, v00.y);
   ctx.lineTo(v10.x, v10.y);
@@ -174,17 +175,16 @@ function drawQuad2dFill(ctx, v00, v10, v11, v01, clr = '#fff') {
 
 function drawQuads2dFill(ctx, istp = 1, jstp = 1) {
   ctx.lineWidth = 0;
-  for (let i = 1, l = 0, j, m, clr, hue; i < lindetail; i += istp, l += istp) {
-    hue = 360 * l / lindetail;
+  // ctx.fillStyle = 'rgba(0, 51, 204, .125)'
+  for (let i = 1, l = 0, j, m; i < lindetail; i += istp, l += istp) {
+    ctx.fillStyle = 'hsla(' + (360 * l / lindetail) + ', 85%, 50%, .667)';
     for (j = 0, m = 1 % raddetail; j < raddetail; j += jstp, m = (j + jstp) % raddetail) {
-      clr = 'hsla(' + hue + ', 85%, 50%, .667)';
-      drawQuad2dFill(ctx, verts[l][j], verts[i][j], verts[i][m], verts[l][m], clr);
+      drawQuad2dFill(ctx, verts[l][j], verts[i][j], verts[i][m], verts[l][m]);
     }
   }
 }
 
-function drawQuad2dStroke(ctx, v00, v10, v11, v01, clr = '#fff') {
-  ctx.strokeStyle = clr;
+function drawQuad2dStroke(ctx, v00, v10, v11, v01) {
   ctx.beginPath();
   ctx.moveTo(v00.x, v00.y);
   ctx.lineTo(v10.x, v10.y);
@@ -196,45 +196,45 @@ function drawQuad2dStroke(ctx, v00, v10, v11, v01, clr = '#fff') {
 
 function drawQuads2dStroke(ctx, lw = 1, istp = 1, jstp = 1) {
   ctx.lineWidth = lw;
+  // ctx.strokeStyle = 'rgba(204, 0, 51, .25)';
 
   let v00 = null,
     v10 = null,
     v11 = null,
     v01 = null;
-  for (let i = 1, l = 0, j, m, clr, hue; i < lindetail; i += istp, l += istp) {
-    hue = 360 * l / lindetail;
+  for (let i = 1, l = 0, j, m; i < lindetail; i += istp, l += istp) {
+    ctx.strokeStyle = 'hsla(' + (360 * l / lindetail) + ', 75%, 50%, .9)';
     for (j = 0, m = 1 % raddetail; j < raddetail; j += jstp, m = (j + jstp) % raddetail) {
       v00 = verts[l][j];
       v10 = verts[i][j];
       v11 = verts[i][m];
       v01 = verts[l][m];
-      clr = 'hsla(' + hue + ', 75%, 50%, .9)';
 
-      drawQuad2dStroke(ctx, v00, v10, v11, v01, clr);
+      drawQuad2dStroke(ctx, v00, v10, v11, v01);
     }
   }
 }
 
 function drawVertices(ctx, ext) {
   ctx.lineWidth = 0;
-  for (let i = 0, j, hue0, hue1; i < lindetail; ++i) {
-    hue0 = 360 * i / lindetail;
+  // ctx.fillStyle = 'rgba(0, 204, 51, .5)';
+  for (let i = 0, j; i < lindetail; ++i) {
+    ctx.fillStyle = 'hsla(' + (360 * i / lindetail) + ', 100%, 50%, 1)';
     for (j = 0; j < raddetail; ++j) {
-      ctx.fillStyle = 'hsla(' + hue0 + ', 100%, 50%, 1)';
       ctx.fillRect(verts[i][j].x - ext, verts[i][j].y - ext, ext, ext);
     }
   }
 }
 
-function drawWalker(ctx, t) {
-  spline.transform2d(ctx, t);
-  ctx.beginPath();
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = '#fff';
-  ctx.arc(0, 0, 15, Math.QUARTER_PI, Math.TWO_PI - Math.QUARTER_PI, false);
-  ctx.stroke();
-  ctx.resetTransform();
-}
+// function drawWalker(ctx, t) {
+//   spline.transform2d(ctx, t);
+//   ctx.beginPath();
+//   ctx.lineWidth = 3;
+//   ctx.strokeStyle = '#fff';
+//   ctx.arc(0, 0, 15, Math.QUARTER_PI, Math.TWO_PI - Math.QUARTER_PI, false);
+//   ctx.stroke();
+//   ctx.resetTransform();
+// }
 
 function initControls(elt) {
   let panel = document.createElement('div');
@@ -246,11 +246,13 @@ function initControls(elt) {
   header.textContent = 'CONTROLS';
   panel.appendChild(header);
 
-  for (let i = 0, sz0 = controls.length; i < sz0; ++i) {
+  const sz0 = controls.length;
+  for (let i = 0, j; i < sz0; ++i) {
     let div = document.createElement('div');
     div.id = 'row' + i;
     div.className = 'controlRow';
-    for (let j = 0, sz1 = controls[i].length; j < sz1; ++j) {
+    const sz1 = controls[i].length;
+    for (j = 0; j < sz1; ++j) {
       let span = document.createElement('span');
       span.id = 'col' + j;
       span.className = 'controlCol'
@@ -271,31 +273,39 @@ function initControls(elt) {
 }
 
 function initCrossSectionScalars(ld, tpr, func) {
-  let ldf = ld - 1;
+  const ldf = ld - 1;
   for (let i = 0; i < ld; ++i) {
     crossSectionScalars.push(Math.easeArray(tpr, i / ldf, func));
   }
 }
 
-function initCurve(lod, xmin = 0, xmax = window.innerWidth, ymin = 0, ymax = window.innerHeight, zmin = -window.innerWidth * 0.5, zmax = window.innerWidth * 0.5) {
+function initCurve(lod) {
   let rndvec = [];
-
-  rndvec.push(Vector.random(xmin, xmax, ymin, ymax, zmin, zmax));
+  let t0, scl;
+  const scl0 = 0.5 * Math.min(window.innerWidth, window.innerHeight);
+  const freq = 3;
+  rndvec.push(new Vector(scl, 0, 0));
   for (let i = 0; i < curvesperspline; ++i) {
-    rndvec.push(Vector.random(xmin, xmax, ymin, ymax, zmin, zmax));
-    rndvec.push(Vector.random(xmin, xmax, ymin, ymax, zmin, zmax));
-    rndvec.push(Vector.random(xmin, xmax, ymin, ymax, zmin, zmax));
+    t0 = 3.0 * Math.TWO_PI * i / curvesperspline;
+    scl = ((3 * i) % freq) < (freq / 2) ? scl0 * .5 : scl0;
+
+    rndvec.push(new Vector(Math.cos(t0) * .25 * scl, Math.sin(t0) * .75 * scl, Math.sin(t0) * .667 * scl));
+
+    rndvec.push(new Vector(Math.cos(t0) * .75 * scl, Math.sin(t0) * .25 * scl, Math.cos(t0) * .667 * scl));
+
+    rndvec.push(new Vector(Math.cos(t0) * scl, Math.sin(t0) * scl, scl));
   }
 
-  return new CubicBezierLoop(rndvec, lod);
-  // return new CubicBezierCurve(rndvec[0], rndvec[1], rndvec[2], rndvec[3]);
+  return new DiscreteCubicBezierLoop(rndvec, lod);
 }
 
 function initFaces(ld, rd) {
-  for (let i = 1, k = 0; i < ld; ++i) {
-    let l = i - 1;
-    for (let j = 0; j < rd; ++j) {
-      let m = (j + 1) % rd;
+  let l = 0,
+    m = 0;
+  for (let i = 1, k = 0, j; i < ld; ++i) {
+    l = i - 1;
+    for (j = 0; j < rd; ++j) {
+      m = (j + 1) % rd;
       faces.push([indices[l * rd + j],
         indices[i * rd + j],
         indices[i * rd + m],
@@ -306,7 +316,7 @@ function initFaces(ld, rd) {
 }
 
 function initIndices(ld, rd) {
-  let sz = ld * rd;
+  const sz = ld * rd;
   for (let i = 0; i < sz; ++i) {
     indices.push(i + 1);
   }
@@ -351,16 +361,15 @@ function initTaper(count = 7, min = 10, max = 100) {
 }
 
 function initVertices(spl, ld, rd) {
+  const ldf = ld - 1;
   let localSpace = null;
-  let ldf = ld - 1;
   let scl = 0;
 
   for (let i = 0, j; i < ld; ++i) {
     verts.push([]);
 
-    // With discrete curve/spline this could be more rigid
-    // but faster. Size of cached transforms === level of detail.
-    localSpace = spl.calcTransform(i / ldf);
+    // localSpace = spl.calcTransform(i / ldf);
+    localSpace = spl.getTransform(i)
     scl = crossSectionScalars[i];
     for (j = 0; j < rd; ++j) {
       verts[i].push(pattern(i, ld, i / ldf, j, rd, j / rd).scale(scl).applyMatrix(localSpace));
@@ -377,23 +386,22 @@ function initVertices(spl, ld, rd) {
 // }
 
 function updateCrossSectionScalars(val) {
-  for (let i = 0, sz = crossSectionScalars.length; i < sz; ++i) {
+  const sz = crossSectionScalars.length;
+  for (let i = 0; i < sz; ++i) {
     crossSectionScalars[i] += val;
   }
 }
 
 function updateVertices(spl, ld, rd) {
   let localSpace = null;
-  let ldf = ld - 1;
+  const ldf = ld - 1;
   let scl = 0;
 
   for (let i = 0, j; i < ld; ++i) {
-    localSpace = spl.calcTransform(i / ldf);
+    // localSpace = spl.calcTransform(i / ldf);
+    localSpace = spl.getTransform(i);
     scl = crossSectionScalars[i];
     for (j = 0; j < rd; ++j) {
-
-      // With discrete curve/spline this could be more rigid
-      // but faster. Size of cached transforms === level of detail.
       verts[i][j] = pattern(i, ld, i / ldf, j, rd, j / rd).scale(scl).applyMatrix(localSpace);
     }
   }
@@ -472,23 +480,52 @@ function objStringVerts() {
 // }
 
 function objSave() {
-  let txt = objString();
-  let uri = encodeURIComponent(txt);
+  const txt = objString();
+  const uri = encodeURIComponent(txt);
   let elt = document.createElement('a');
   elt.setAttribute('href', 'data:text/plain;charset=utf-8,' + uri);
   elt.setAttribute('download', fileName);
   elt.click();
 }
 
+function randomCurveCartesian(lod,
+  xmin = 0, xmax = window.innerWidth,
+  ymin = 0, ymax = window.innerHeight,
+  zmin = -window.innerWidth * 0.5, zmax = window.innerWidth * 0.5) {
+  let rndvec = [];
+  rndvec.push(Vector.randomCartesian(xmin, xmax, ymin, ymax, zmin, zmax));
+  for (let i = 0; i < curvesperspline; ++i) {
+    rndvec.push(Vector.randomCartesian(xmin, xmax, ymin, ymax, zmin, zmax));
+    rndvec.push(Vector.randomCartesian(xmin, xmax, ymin, ymax, zmin, zmax));
+    rndvec.push(Vector.randomCartesian(xmin, xmax, ymin, ymax, zmin, zmax));
+  }
+  return new DiscreteCubicBezierLoop(rndvec, lod);
+}
+
+function randomCurvePolar(lod,
+  mintheta = 0, maxtheta = Math.TWO_PI,
+  minphi = 0, maxphi = Math.PI,
+  radius = Math.min(window.innerWidth, window.innerHeight) * 0.5,
+  offset = Vector.zero) {
+  let rndvec = [];
+  rndvec.push(Vector.randomPolar(mintheta, maxtheta, minphi, maxphi, radius, offset));
+  for (let i = 0; i < curvesperspline; ++i) {
+    rndvec.push(Vector.randomPolar(mintheta, maxtheta, minphi, maxphi, radius, offset));
+    rndvec.push(Vector.randomPolar(mintheta, maxtheta, minphi, maxphi, radius, offset));
+    rndvec.push(Vector.randomPolar(mintheta, maxtheta, minphi, maxphi, radius, offset));
+  }
+  return new DiscreteCubicBezierLoop(rndvec, lod);
+}
+
 function svgSave(fill = 'transparent',
   stroke = '#000000',
   strokeWeight = taper[0]) {
-  let rndname = spline.getClass() + '_' + String.random(5);
+  const rndname = spline.getClass() + '_' + String.random(5);
   fileName = rndname + '.svg';
   let txt = '<?xml version="1.0" encoding="utf-8"?><svg version="1.1" id="' + rndname + '" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 ' + cnvs.width + ' ' + cnvs.height + '" xml:space="preserve">';
   txt += spline.toSvgPath(fill, stroke, strokeWeight);
   txt += '</svg>';
-  let uri = encodeURIComponent(txt);
+  const uri = encodeURIComponent(txt);
   let elt = document.createElement('a');
   elt.setAttribute('href', 'data:text/plain;charset=utf-8,' + uri);
   elt.setAttribute('download', fileName);
@@ -503,9 +540,7 @@ function onContextMenu(e) {
 function onKeyDown(e) {
   // console.log(e.keyCode);
 
-  if (e.keyCode === 16) {
-    // Shift
-  } else if (e.keyCode == 67) {
+  if (e.keyCode == 67) {
     // C
     spline.rotateY(rotateSpeed * rotateDir);
     updateVertices(spline, lindetail, raddetail);
@@ -520,9 +555,6 @@ function onKeyDown(e) {
     // F
     adjustForward = null;
     adjustBackward = null;
-  } else if (e.keyCode === 86) {
-    // V
-    rotateDir = -1;
   } else if (e.keyCode === 88) {
     // X
     spline.rotateX(rotateSpeed * rotateDir);
@@ -536,8 +568,7 @@ function onKeyDown(e) {
     spline.scale(downscalar);
     updateVertices(spline, lindetail, raddetail);
   } else if (e.keyCode === 98 || e.keyCode === 40) {
-    // Numpad 2, Down arrow
-    // Inverted for 2d Canvas.
+    // Numpad 2, Down arrow. Inverted for 2d Canvas.
     spline.translate(Vector.scale(Vector.up, translationSpeed));
     updateVertices(spline, lindetail, raddetail);
   } else if (e.keyCode === 99 || e.keyCode === 34) {
@@ -557,8 +588,7 @@ function onKeyDown(e) {
     spline.scale(upscalar);
     updateVertices(spline, lindetail, raddetail);
   } else if (e.keyCode === 104 || e.keyCode === 38) {
-    // Numpad 8, Up arrow
-    // Inverted for 2d Canvas.
+    // Numpad 8, Up arrow. Inverted for 2d Canvas.
     spline.translate(Vector.scale(Vector.down, translationSpeed));
     updateVertices(spline, lindetail, raddetail);
   } else if (e.keyCode === 105 || e.keyCode === 33) {
@@ -569,9 +599,7 @@ function onKeyDown(e) {
 }
 
 function onKeyUp(e) {
-  if (e.keyCode === 16) {
-    // Shift
-  } else if (e.keyCode === 65) {
+  if (e.keyCode === 65) {
     // A
     showMesh = (showMesh + 1) % 4;
   } else if (e.keyCode === 68) {
@@ -599,7 +627,9 @@ function onKeyUp(e) {
     rotateDir *= -1;
   } else if (e.keyCode === 87) {
     // W
-    spline = initCurve(lindetail, -center.x, center.x, -center.y, center.y, -center.x, center.x);
+    spline = randomCurvePolar(lindetail);
+    initTaper(7, 10, 80);
+    initCrossSectionScalars(lindetail, taper, Math.smootherStep);
     updateVertices(spline, lindetail, raddetail);
   }
 }
@@ -616,7 +646,6 @@ function onMouseDown(e) {
 }
 
 function onMouseMove(e) {
-  mouse.set(e.clientX / window.innerWidth, e.clientY / window.innerHeight, 0);
 
   if (e.buttons === 1) {
     // Left

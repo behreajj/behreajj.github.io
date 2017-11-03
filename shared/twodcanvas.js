@@ -59,9 +59,9 @@ class TwoDCnvs extends Cnvs {
     return this._imgData.data.length;
   }
 
-  getIndexOfVector(v) {
-    return Math.clamp(4 * (v.y * this._width + v.x), 0, this._imgData.data.length - 1);
-  }
+  // getIndexOfVector(v) {
+  //   return Math.clamp(4 * (v.y * this._width + v.x), 0, this._imgData.data.length - 1);
+  // }
 
   getPixelAsComposite(index) {
     return this._isLittleEndian ? this.getPixelAsCompositeLittleEndian(index) : this.getPixelAsCompositeBigEndian(index);
@@ -103,8 +103,8 @@ class TwoDCnvs extends Cnvs {
   }
 
   // TODO Look up CSS format for single line font.
-  setFont(weight, size, fontf, align = 'center', baseline = 'middle') {
-    this._ctx.font = weight + size + fontf;
+  setFont(weight, size, sizeunit, fontfamily = 'sans-serif', align = 'center', baseline = 'middle') {
+    this._ctx.font = weight + size + sizeunit + fontfamily;
     this._ctx.textAlign = align;
     this._ctx.textBaseline = baseline;
   }

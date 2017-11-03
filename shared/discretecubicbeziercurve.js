@@ -9,27 +9,8 @@ class DiscreteCubicBezierCurve extends CubicBezierCurve {
 
     super(ap0, cp0, cp1, ap1);
     this._transforms = this.calcTransforms(lod);
-    // this._transforms = this.preCalcTransforms(lod);
-  }
 
-  // TODO Exploratory.
-  // Requires testing.
-  // Goal is to get evenly spaced segments
-  // regardless of curve velocity.
-  // preCalcTransforms(lod) {
-  //   let pts = this.calcPoints(lod);
-  //   let tns = this.calcTangents(lod);
-  //   let result = [];
-  //   let lodf = lod - 1.0;
-  //   let st = 0;
-  //   for (let i = 0; i < lod; ++i) {
-  //     st = i / lodf;
-  //     result.push(Matrix4x4.calcOrientation(
-  //       Vector.easeArray(pts, st, Math.lerp),
-  //       Vector.easeArray(tns, st, Math.lerp).norm()));
-  //   }
-  //   return result;
-  // }
+  }
 
   // TODO Requires testing.
   adjust(pointIndex,
@@ -77,7 +58,6 @@ class DiscreteCubicBezierCurve extends CubicBezierCurve {
 
   updateTransforms(lod = this._transforms.length) {
     this._transforms = CubicBezier.calcTransforms(this._ap0, this._cp0, this._cp1, this._ap1, lod);
-    // this._transforms = this.preCalcTransforms(lod);
   }
 }
 

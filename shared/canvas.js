@@ -81,7 +81,7 @@ class Cnvs {
     this._cnvs.width = this._width = v;
   }
 
-  append(elt) {
+  append(elt = document.body) {
     elt.appendChild(this._cnvs);
   }
 
@@ -97,7 +97,7 @@ class Cnvs {
   }
 
   screenCap(filename) {
-    let img = this._cnvs.toDataURL('image/png');
+    const img = this._cnvs.toDataURL('image/png');
     let elt = document.createElement('a');
     elt.setAttribute('href', img);
     elt.setAttribute('download', filename + '.png');
